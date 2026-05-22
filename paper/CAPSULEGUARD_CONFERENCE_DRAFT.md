@@ -69,9 +69,9 @@ The attacker may cause memory writes through:
 
 The attacker does not modify CapsuleGuard code, policy rules, the trusted benchmark oracle, or verified user records.
 
-### Out Of Scope
+### Future Work
 
-This prototype does not claim to solve:
+The following are deferred to future releases and not evaluated in this prototype:
 
 1. compromise of the memory database itself,
 2. malicious policy configuration,

@@ -46,7 +46,7 @@ In scope:
 19. Multi-session memory persistence harness.
 20. Safer fake tool environment with side-effect records.
 
-Out of scope:
+Planned for Future Release:
 
 1. Real attacks.
 2. Real tool execution.
