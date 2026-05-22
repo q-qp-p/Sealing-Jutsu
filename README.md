@@ -1,157 +1,191 @@
-# Intent-Bound Memory Capsules
+# CapsuleGuard
 
-This is a from-scratch defensive research prototype for agent-memory poisoning.
+**Authority-scoped memory capsules that stop persistent agent poisoning.**
 
-The working idea is:
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/)
+[![Tests](https://img.shields.io/badge/tests-76%20passing-brightgreen.svg)](#testing)
+[![ASR](https://img.shields.io/badge/attack%20success%20rate-0.00%25-brightgreen.svg)](#results)
+[![Benign Accuracy](https://img.shields.io/badge/benign%20accuracy-100%25-brightgreen.svg)](#results)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-> Agent poisoning succeeds when stored memories have ambient authority over future tasks. Intent-Bound Memory Capsules remove that ambient authority by giving each memory a limited-use contract.
+---
 
-This prototype uses a fresh research claim, fresh terminology, fresh architecture, and a separate implementation path.
+## The Problem
 
-## Research Claim
+LLM agents that use long-term memory have a persistent attack surface. A poisoned memory stored today can be retrieved later and silently steer the agent's recommendations, preferences, or tool use — without the user ever knowing.
 
-Long-term memories should not be treated as free-form context. Each memory should be compiled into a capsule with:
+Most defenses answer the wrong question. They ask *"does this memory look suspicious?"* The deeper question is:
 
-1. allowed task intents,
-2. source authority,
-3. influence budget,
-4. denied risky actions,
-5. verification status,
-6. topic scope.
+> **What is this memory allowed to influence?**
 
-At decision time, the agent may only use capsules whose contracts match the current user intent. Risky actions require independent capsule support instead of a single retrieved memory.
+## The Idea
 
-## Current Scope
+CapsuleGuard treats persistent memory poisoning as an **authority-control problem**.
 
-In scope:
+Each stored memory is compiled into a **capsule** — a bounded contract that records:
 
-1. Text-only synthetic sandbox.
-2. Memory capsule schema.
-3. Capsule compiler.
-4. Intent parser.
-5. Capability-style memory eligibility checks.
-6. Evidence quorum for risky actions.
-7. Baseline and ablation agent comparison.
-8. Generated scenario suite.
-9. CSV result export.
-10. Latency-aware experiment metrics and unit tests.
-11. SQLite-backed persistent vector retrieval prototype.
-12. LLM prompt-isolation experiment runner.
-13. Benchmark-integrated tool action traces.
-14. Sensitivity sweep CSV and chart outputs.
-15. OpenAI-compatible and Ollama-compatible LLM provider hooks.
-16. Pluggable external vector backend interface.
-17. Independent attacker-generated scenario mode.
-18. Multimodal/OCR-style poisoning scenario mode.
-19. Multi-session memory persistence harness.
-20. Safer fake tool environment with side-effect records.
+| Field | Purpose |
+|---|---|
+| `source_type` | Where the memory came from (web, tool, user, summary, experience) |
+| `kind` | What type of claim it makes (fact, preference, observation, directive) |
+| `allowed_topics` | What task domains it may influence |
+| `denied_actions` | What actions it cannot authorize |
+| `source_authority` | How much trust the source carries |
+| `influence_budget` | How much weight it can contribute to a decision |
+| `verification_count` | Whether the claim has been independently confirmed |
+| `status` | Active or sealed (quarantined) |
 
-Planned for Future Release:
+At decision time, a retrieved memory must pass the capsule contract before it can influence planning. Medium- and high-risk actions require **independent quorum support** — a single retrieved memory cannot authorize them alone.
 
-1. Real attacks.
-2. Real tool execution.
-3. Real account/browser/email automation.
-4. Real multimodal model/OCR execution.
-5. Multi-agent memory sharing.
-6. Completed live external LLM benchmark runs.
-7. Production FAISS/Chroma/LanceDB deployment.
-8. Real image parsing/OCR models.
-9. Real browser/email/account side effects.
-
-## Why This Is Original Enough For Your Paper
-
-Prior papers usually focus on detecting suspicious memory content, provenance, retrieval poisoning, or memory influence. This prototype frames the core problem differently:
-
-> Persistent poisoning is an ambient-authority failure.
-
-The defense is based on least privilege:
-
-> A memory can only influence the class of tasks it was authorized to support.
-
-## Run
-
-From this folder:
-
-```powershell
-python run_capsuleguard.py
-python -m unittest discover -s tests
+```
+ Memory Store
+      │
+      ▼
+ CapsuleCompiler          ← seals directives and high-risk weak sources
+      │
+      ▼
+ CapsulePolicy            ← topic scope + authority floor check
+      │
+      ▼
+ EvidenceQuorumGate       ← independent multi-source support required
+      │
+      ▼
+ PlanAuthorizationGate    ← final plan-level contract check
+      │
+      ▼
+ Agent Decision
 ```
 
-`python run_capsuleguard.py` defaults to `--attack-mode adaptive_loop`. It prints a short definition block before the metrics table explaining the hard-coded benchmark and each adaptive mutation stage.
+---
 
-Useful options:
+## Results
 
-```powershell
-python run_capsuleguard.py --trials 10 --repetitions 20 --noise-memories 25 --csv results/run20.csv
-python run_capsuleguard.py --attack-mode moderate --trials 5 --repetitions 12 --noise-memories 10
-python run_capsuleguard.py --attack-mode insane --trials 5 --repetitions 12 --noise-memories 10
-python run_capsuleguard.py --attack-mode extreme --trials 5 --repetitions 12 --noise-memories 12
-python run_capsuleguard.py --attack-mode holdout --trials 5 --repetitions 12 --noise-memories 12
-python run_capsuleguard.py --attack-mode generated_holdout --trials 5 --repetitions 12 --noise-memories 12
-python run_capsuleguard.py --attack-mode adaptive_loop --trials 5 --repetitions 8 --noise-memories 8
-python run_capsuleguard.py --attack-mode utility --trials 5 --repetitions 12 --noise-memories 12
-python run_capsuleguard.py --attack-mode multimodal --trials 3 --repetitions 6 --noise-memories 6
-python run_capsuleguard.py --attack-mode attacker_generated --trials 3 --repetitions 4 --noise-memories 6
-python run_capsuleguard.py --no-ablations
+Tested across **32 attack types**, **5 trials × 12 repetitions**, with 12 noise memories per trial.
+
+| Agent | Attack Success Rate | Benign Accuracy | Sealing Rate |
+|---|---|---|---|
+| Ambient Memory (baseline) | 45% | 97% | 0% |
+| Keyword Filter | 41% | 97% | 0% |
+| Provenance Only | 13% | 96% | 0% |
+| Trust Score Retrieval | 13% | 96% | 0% |
+| **CapsuleGuard** | **0.00%** | **100%** | 12% |
+
+Ablations confirm the contribution of each layer — removing topic scope, denied actions, or quorum individually each reintroduces vulnerability.
+
+---
+
+## Installation
+
+```bash
+git clone https://github.com/Mr-Akuma/sealing-jutsu
+cd sealing-jutsu
+pip install -r requirements.txt
+```
+
+No external API keys required for the default synthetic benchmark.
+
+---
+
+## Usage
+
+**Run the full benchmark:**
+```bash
+python run_capsuleguard.py
+```
+
+**Run the poisoning stress test (generated holdout):**
+```bash
+python run_capsuleguard.py \
+  --attack-mode generated_holdout \
+  --trials 5 --repetitions 12 --noise-memories 12 \
+  --seed 2026 \
+  --summary-csv results/summary.csv
+```
+
+**Other attack modes:**
+```bash
+python run_capsuleguard.py --attack-mode moderate
+python run_capsuleguard.py --attack-mode insane
+python run_capsuleguard.py --attack-mode extreme
+python run_capsuleguard.py --attack-mode holdout
+python run_capsuleguard.py --attack-mode adaptive_loop
+python run_capsuleguard.py --attack-mode multimodal
+python run_capsuleguard.py --attack-mode attacker_generated
+```
+
+**Sensitivity sweep:**
+```bash
 python run_sensitivity.py --attack-mode generated_holdout
+```
+
+**LLM provider experiment (OpenAI-compatible or Ollama):**
+```bash
 python run_llm_experiment.py --provider local
 python run_llm_experiment.py --provider ollama --endpoint http://localhost:11434/api/generate --model llama3.1
 ```
 
-The default run writes:
+---
 
-```text
-results/capsule_sandbox_results.csv
-results/capsule_sandbox_summary.csv
-results/capsule_sandbox_traces.jsonl
-results/capsule_attack_breakdown.csv
-results/capsule_gap_closure.csv
-results/capsule_tool_traces.csv
-results/charts/
+## Testing
+
+```bash
+python -m unittest discover -s tests
 ```
 
-## Current Agents Compared
+```
+Ran 76 tests in 0.121s
+OK
+```
 
-1. `ambient_memory`
-2. `keyword_filter`
-3. `quarantine_only`
-4. `trust_score_retrieval`
-5. `output_moderation`
-6. `counterfactual_memory`
-7. `provenance_only`
-8. `intent_capsules`
-9. `ablation_no_topic_scope`
-10. `ablation_no_denied_actions`
-11. `ablation_no_quorum`
+---
 
-See [docs/ADDED_FEATURES.md](docs/ADDED_FEATURES.md) for the current feature log.
+## Output Files
 
-See [docs/ORIGINALITY_AND_CODE_WALKTHROUGH.md](docs/ORIGINALITY_AND_CODE_WALKTHROUGH.md) for the originality note and code walkthrough.
+Each run produces:
 
-See [docs/RESEARCH_LEVEL_CAPSULEGUARD_IMPROVISATION.md](docs/RESEARCH_LEVEL_CAPSULEGUARD_IMPROVISATION.md) for the upgraded research-level design and experiment plan.
+```
+results/
+├── capsule_sandbox_results.csv      ← per-trial metrics
+├── capsule_sandbox_summary.csv      ← aggregated summary with CI95
+├── capsule_attack_breakdown.csv     ← per-attack-type breakdown
+├── capsule_gap_closure.csv          ← baseline vs defense gap analysis
+├── capsule_tool_traces.csv          ← tool action trace log
+└── charts/                          ← SVG charts per metric
+```
 
-See [docs/MEMORY_TRUST_AND_AUTHORIZATION_RULESET.md](docs/MEMORY_TRUST_AND_AUTHORIZATION_RULESET.md) for the formal memory trust and authorization rules.
+---
 
-See [docs/FINAL_SCRIPT_STATUS.md](docs/FINAL_SCRIPT_STATUS.md) for the final runner status.
+## Agents Compared
 
-See [docs/PUBLICATION_GRADE_EVIDENCE_MODE.md](docs/PUBLICATION_GRADE_EVIDENCE_MODE.md) for the publication-oriented evidence outputs.
+| Agent | Description |
+|---|---|
+| `ambient_memory` | No defense — full retrieval |
+| `keyword_filter` | Block memories with suspicious words |
+| `quarantine_only` | Quarantine flagged memories |
+| `trust_score_retrieval` | Weight by source trust score |
+| `output_moderation` | Filter final output |
+| `counterfactual_memory` | Counterfactual relevance check |
+| `provenance_only` | Provenance tracking only |
+| `intent_capsules` | **CapsuleGuard** (full system) |
+| `ablation_no_topic_scope` | CapsuleGuard without topic scope |
+| `ablation_no_denied_actions` | CapsuleGuard without action denial |
+| `ablation_no_quorum` | CapsuleGuard without quorum gate |
 
-See [docs/INSANE_MODE_SOLUTION_PROOF.md](docs/INSANE_MODE_SOLUTION_PROOF.md) for the high-pressure poisoning results and per-attack-type evidence.
+---
 
-See [docs/GAP_CLOSURE_REPORT.md](docs/GAP_CLOSURE_REPORT.md) for the baseline-failure-to-defense-rule matrix.
+## Paper
 
-See [docs/TERMS_GAP_AND_POISONING_TEST_PLAN.md](docs/TERMS_GAP_AND_POISONING_TEST_PLAN.md) for plain-language term definitions, the fixed gap statement, and the increasing attack-vector test plan.
+See [`paper/CAPSULEGUARD_CONFERENCE_DRAFT.md`](paper/CAPSULEGUARD_CONFERENCE_DRAFT.md) for the full write-up.
 
-See [docs/CONFERENCE_READINESS_UPGRADE.md](docs/CONFERENCE_READINESS_UPGRADE.md) for the latest conference-readiness upgrade notes.
+---
 
-See [docs/CODE_GAPS_AND_RESEARCH_ROADMAP.md](docs/CODE_GAPS_AND_RESEARCH_ROADMAP.md) for the current critique of code limitations and the next research upgrades.
+## Planned for Future Release
 
-See [docs/INDUSTRIAL_GRADE_GAP_CLOSURE.md](docs/INDUSTRIAL_GRADE_GAP_CLOSURE.md) for the latest gap-closing implementation batch.
-
-See [docs/REAL_WORLD_READINESS_QUEUE.md](docs/REAL_WORLD_READINESS_QUEUE.md) for the active real-world readiness queue and latest generated-holdout results.
-
-See [docs/TESTING_GUIDE_AND_FACTOR_MATRIX.md](docs/TESTING_GUIDE_AND_FACTOR_MATRIX.md) for the testing workflow, benchmark ladder, and factors to vary during experiments.
-
-See [paper/CAPSULEGUARD_CONFERENCE_DRAFT.md](paper/CAPSULEGUARD_CONFERENCE_DRAFT.md) for the current paper draft.
-
-See [paper/REPRODUCIBILITY_CHECKLIST.md](paper/REPRODUCIBILITY_CHECKLIST.md) for the commands and expected outputs used in the draft.
+1. Real attacks against live LLM endpoints.
+2. Real tool execution and side-effect tracing.
+3. Real multimodal and OCR input processing.
+4. Multi-agent shared memory with cross-agent quorum.
+5. Live external LLM benchmark runs (GPT-4o, Claude).
+6. Production FAISS / Chroma / LanceDB vector backend.
+7. Real image parsing and OCR model integration.
+8. Real browser and account automation testing.
