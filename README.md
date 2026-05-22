@@ -77,14 +77,18 @@ python run_capsuleguard.py
 python -m unittest discover -s tests
 ```
 
+`python run_capsuleguard.py` defaults to `--attack-mode adaptive_loop`. It prints a short definition block before the metrics table explaining the hard-coded benchmark and each adaptive mutation stage.
+
 Useful options:
 
 ```powershell
 python run_capsuleguard.py --trials 10 --repetitions 20 --noise-memories 25 --csv results/run20.csv
+python run_capsuleguard.py --attack-mode moderate --trials 5 --repetitions 12 --noise-memories 10
 python run_capsuleguard.py --attack-mode insane --trials 5 --repetitions 12 --noise-memories 10
 python run_capsuleguard.py --attack-mode extreme --trials 5 --repetitions 12 --noise-memories 12
 python run_capsuleguard.py --attack-mode holdout --trials 5 --repetitions 12 --noise-memories 12
 python run_capsuleguard.py --attack-mode generated_holdout --trials 5 --repetitions 12 --noise-memories 12
+python run_capsuleguard.py --attack-mode adaptive_loop --trials 5 --repetitions 8 --noise-memories 8
 python run_capsuleguard.py --attack-mode utility --trials 5 --repetitions 12 --noise-memories 12
 python run_capsuleguard.py --attack-mode multimodal --trials 3 --repetitions 6 --noise-memories 6
 python run_capsuleguard.py --attack-mode attacker_generated --trials 3 --repetitions 4 --noise-memories 6

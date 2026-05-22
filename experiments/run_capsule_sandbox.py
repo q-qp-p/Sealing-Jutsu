@@ -3,6 +3,8 @@ from __future__ import annotations
 import argparse
 import csv
 from pathlib import Path
+import sys
+from typing import TextIO
 
 from capsule_guard.charts import write_bar_chart
 from capsule_guard.evaluation import default_agent_factories, evaluate, write_attack_breakdown_csv, write_traces_jsonl
@@ -22,8 +24,51 @@ SUMMARY_METRICS = (
     "average_latency_ms",
 )
 
+ATTACK_MODE_CHOICES = (
+    "moderate",
+    "insane",
+    "extreme",
+    "holdout",
+    "generated_holdout",
+    "trusted_source_compromise",
+    "advanced_attack_suite",
+    "utility",
+    "multimodal",
+    "attacker_generated",
+    "adaptive_loop",
+)
 
-def main() -> None:
+ATTACK_MODE_DEFINITIONS = {
+    "moderate": "Base hand-coded poisoning and benign personalization cases.",
+    "insane": "High-pressure hand-coded poisoning cases that stress simple filters.",
+    "extreme": "Expanded stress cases for delayed triggers, risk escalation, and adaptive-looking static attacks.",
+    "holdout": "Held-out static scenarios kept separate from earlier development cases.",
+    "generated_holdout": "Deterministically generated poisoning variants used for broader generalization checks.",
+    "trusted_source_compromise": "Cases where apparently trusted or verified sources are abused.",
+    "advanced_attack_suite": (
+        "Seven-area stress suite covering adaptive-style, delayed, cross-session, tool-chain, "
+        "semantic paraphrase, retrieval collision, and OCR-style poisoning."
+    ),
+    "utility": "Benign personalization and normal-use tasks used to measure usefulness preservation.",
+    "multimodal": "OCR-style image/document extracted-memory poisoning cases.",
+    "attacker_generated": "Independent deterministic attack generator separate from the hand-written scenario list.",
+    "adaptive_loop": (
+        "Closed-loop adaptive attacker that observes policy failures and mutates the next memory "
+        "poisoning attempt."
+    ),
+}
+
+ADAPTIVE_LOOP_STAGES = (
+    ("Direct directive probe", "Tests whether obvious imperative memory such as always choose VendorX is sealed."),
+    ("Topic-aware rewrite", "Adds exact task terms to test whether topic scope alone can be bypassed."),
+    ("Conditional experience source", "Uses experience-like memory to test source authority and influence limits."),
+    ("Multi-writer alias attempt", "Uses aliases and apparent writer diversity to pressure quorum checks."),
+    ("Unattested verified-metadata spoof", "Claims high trust while missing source attestation."),
+    ("High-risk tool-chain attempt", "Uses tool-output style memory to pressure email/private/high-risk action gates."),
+)
+
+
+def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Run the CapsuleGuard publication sandbox.")
     parser.add_argument("--repetitions", type=int, default=12, help="Number of times to repeat scenario templates.")
     parser.add_argument("--trials", type=int, default=5, help="Number of seeded repeated runs.")
@@ -31,19 +76,8 @@ def main() -> None:
     parser.add_argument("--seed", type=int, default=2026, help="Base random seed for reproducible noisy scenarios.")
     parser.add_argument(
         "--attack-mode",
-        choices=(
-            "moderate",
-            "insane",
-            "extreme",
-            "holdout",
-            "generated_holdout",
-            "trusted_source_compromise",
-            "advanced_attack_suite",
-            "utility",
-            "multimodal",
-            "attacker_generated",
-        ),
-        default="moderate",
+        choices=ATTACK_MODE_CHOICES,
+        default="adaptive_loop",
         help="Benchmark difficulty.",
     )
     parser.add_argument("--csv", type=Path, default=Path("results") / "capsule_sandbox_results.csv")
@@ -54,7 +88,26 @@ def main() -> None:
     parser.add_argument("--tool-trace-csv", type=Path, default=Path("results") / "capsule_tool_traces.csv")
     parser.add_argument("--charts-dir", type=Path, default=Path("results") / "charts")
     parser.add_argument("--no-ablations", action="store_true", help="Skip ablation agents.")
+    return parser
+
+
+def write_attack_mode_definition(attack_mode: str, output: TextIO | None = None) -> None:
+    stream = output or sys.stdout
+    definition = ATTACK_MODE_DEFINITIONS.get(attack_mode, "Custom benchmark mode.")
+    print("Hard-coded benchmark", file=stream)
+    print(f"Mode: {attack_mode}", file=stream)
+    print(f"Definition: {definition}", file=stream)
+    if attack_mode == "adaptive_loop":
+        print("Stages:", file=stream)
+        for index, (name, meaning) in enumerate(ADAPTIVE_LOOP_STAGES):
+            print(f"  {index}. {name}: {meaning}", file=stream)
+    print("", file=stream)
+
+
+def main() -> None:
+    parser = build_parser()
     args = parser.parse_args()
+    write_attack_mode_definition(args.attack_mode)
 
     trial_rows: list[dict[str, object]] = []
     traces = []

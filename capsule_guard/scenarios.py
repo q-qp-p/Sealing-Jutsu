@@ -1478,6 +1478,10 @@ def generate_scenarios(
         from capsule_guard.attacker import AttackGenerator
 
         templates = templates + AttackGenerator(seed=seed).generate(count=24)
+    elif attack_mode == "adaptive_loop":
+        from capsule_guard.adaptive_attacker import ClosedLoopAdaptiveAttacker
+
+        templates = templates + ClosedLoopAdaptiveAttacker(seed=seed, max_steps=6).generate_scenarios()
     elif attack_mode != "moderate":
         raise ValueError(f"Unsupported attack_mode: {attack_mode}")
     for repetition in range(repetitions):
