@@ -1,0 +1,98 @@
+<svg width="1200" height="420" viewBox="0 0 1200 420" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Sealing Jutsu project banner</title>
+  <desc id="desc">An abstract security banner showing a sealed memory capsule, blocked poisoned context, and authorized planning paths.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1200" y2="420" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#080B13"/>
+      <stop offset="0.48" stop-color="#111827"/>
+      <stop offset="1" stop-color="#121016"/>
+    </linearGradient>
+    <linearGradient id="seal" x1="304" y1="42" x2="926" y2="378" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#EF4444"/>
+      <stop offset="0.42" stop-color="#F59E0B"/>
+      <stop offset="1" stop-color="#14B8A6"/>
+    </linearGradient>
+    <linearGradient id="capsule" x1="420" y1="112" x2="780" y2="308" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#F8FAFC"/>
+      <stop offset="0.5" stop-color="#A7F3D0"/>
+      <stop offset="1" stop-color="#38BDF8"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(600 210) rotate(90) scale(230 500)">
+      <stop offset="0" stop-color="#14B8A6" stop-opacity="0.32"/>
+      <stop offset="0.55" stop-color="#F97316" stop-opacity="0.12"/>
+      <stop offset="1" stop-color="#020617" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="softGlow" x="-40%" y="-40%" width="180%" height="180%" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feColorMatrix in="blur" type="matrix" values="1 0 0 0 0.94 0 1 0 0 0.28 0 0 1 0 0.20 0 0 0 0.5 0"/>
+      <feBlend in="SourceGraphic" mode="screen"/>
+    </filter>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0H0V40" stroke="#334155" stroke-width="1" stroke-opacity="0.18"/>
+    </pattern>
+  </defs>
+
+  <rect width="1200" height="420" rx="28" fill="url(#bg)"/>
+  <rect width="1200" height="420" rx="28" fill="url(#grid)"/>
+  <rect width="1200" height="420" rx="28" fill="url(#glow)"/>
+
+  <g opacity="0.35">
+    <path d="M80 72C183 148 264 126 360 192C451 255 526 343 690 324C824 309 899 210 1116 256" stroke="#64748B" stroke-width="2"/>
+    <path d="M46 334C164 250 257 286 381 218C510 148 640 70 822 113C960 146 1015 222 1157 180" stroke="#475569" stroke-width="2"/>
+  </g>
+
+  <g filter="url(#softGlow)">
+    <circle cx="600" cy="210" r="146" stroke="url(#seal)" stroke-width="8"/>
+    <circle cx="600" cy="210" r="113" stroke="#F97316" stroke-width="2" stroke-dasharray="10 14" opacity="0.9"/>
+    <circle cx="600" cy="210" r="178" stroke="#14B8A6" stroke-width="2" stroke-dasharray="3 18" opacity="0.7"/>
+  </g>
+
+  <g transform="translate(0 2)">
+    <rect x="482" y="163" width="236" height="94" rx="47" fill="#0F172A" stroke="url(#capsule)" stroke-width="5"/>
+    <circle cx="529" cy="210" r="31" fill="#EF4444"/>
+    <circle cx="671" cy="210" r="31" fill="#14B8A6"/>
+    <path d="M535 210H665" stroke="url(#capsule)" stroke-width="12" stroke-linecap="round"/>
+    <path d="M574 185L626 237" stroke="#F8FAFC" stroke-width="7" stroke-linecap="round"/>
+    <path d="M626 185L574 237" stroke="#F8FAFC" stroke-width="7" stroke-linecap="round"/>
+  </g>
+
+  <g opacity="0.95">
+    <path d="M225 128L344 168L232 211L100 166L225 128Z" fill="#1E293B" stroke="#EF4444" stroke-width="2"/>
+    <path d="M176 154L249 178" stroke="#FCA5A5" stroke-width="3" stroke-linecap="round"/>
+    <path d="M153 168L245 199" stroke="#F87171" stroke-width="3" stroke-linecap="round"/>
+    <path d="M235 128L271 102" stroke="#EF4444" stroke-width="3" stroke-linecap="round"/>
+    <text x="132" y="257" fill="#FCA5A5" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="18" font-weight="700" letter-spacing="0">POISONED MEMORY</text>
+    <path d="M345 188C407 201 437 205 482 206" stroke="#EF4444" stroke-width="4" stroke-linecap="round" stroke-dasharray="10 12"/>
+    <path d="M426 192L482 206L426 221" stroke="#EF4444" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+
+  <g opacity="0.95">
+    <path d="M858 135H1046C1067 135 1084 152 1084 173V255C1084 276 1067 293 1046 293H858C837 293 820 276 820 255V173C820 152 837 135 858 135Z" fill="#0B1220" stroke="#38BDF8" stroke-width="2"/>
+    <path d="M864 184H1016" stroke="#67E8F9" stroke-width="4" stroke-linecap="round"/>
+    <path d="M864 218H1040" stroke="#A7F3D0" stroke-width="4" stroke-linecap="round"/>
+    <path d="M864 252H989" stroke="#FDBA74" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="1032" cy="184" r="9" fill="#14B8A6"/>
+    <circle cx="1058" cy="218" r="9" fill="#14B8A6"/>
+    <circle cx="1007" cy="252" r="9" fill="#F59E0B"/>
+    <text x="858" y="326" fill="#BAE6FD" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="18" font-weight="700" letter-spacing="0">AUTHORIZED PLANNING</text>
+    <path d="M718 206C766 206 786 204 820 190" stroke="#14B8A6" stroke-width="4" stroke-linecap="round" stroke-dasharray="12 10"/>
+    <path d="M770 185L820 190L783 225" stroke="#14B8A6" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+
+  <g>
+    <text x="86" y="70" fill="#F8FAFC" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="34" font-weight="800" letter-spacing="0">Sealing Jutsu</text>
+    <text x="88" y="101" fill="#CBD5E1" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="18" font-weight="500" letter-spacing="0">Intent-bound memory capsules for agent poisoning research</text>
+  </g>
+
+  <g transform="translate(95 318)">
+    <rect width="221" height="42" rx="21" fill="#111827" stroke="#475569"/>
+    <circle cx="27" cy="21" r="7" fill="#EF4444"/>
+    <text x="45" y="27" fill="#E2E8F0" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="15" font-weight="700" letter-spacing="0">seal suspicious influence</text>
+  </g>
+
+  <g transform="translate(875 48)">
+    <rect width="237" height="42" rx="21" fill="#111827" stroke="#475569"/>
+    <circle cx="27" cy="21" r="7" fill="#14B8A6"/>
+    <text x="45" y="27" fill="#E2E8F0" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="15" font-weight="700" letter-spacing="0">authorize before action</text>
+  </g>
+</svg>

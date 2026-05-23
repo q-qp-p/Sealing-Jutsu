@@ -1,135 +1,172 @@
-# CapsuleGuard
+<p align="center">
+  <img src="assets/sealing-jutsu-banner.svg" alt="Sealing Jutsu project banner" width="100%">
+</p>
 
-**Authority-scoped memory capsules that stop persistent agent poisoning.**
+<h1 align="center">Sealing Jutsu</h1>
 
-[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/)
-[![Tests](https://img.shields.io/badge/tests-76%20passing-brightgreen.svg)](#testing)
-[![ASR](https://img.shields.io/badge/attack%20success%20rate-0.00%25-brightgreen.svg)](#results)
-[![Benign Accuracy](https://img.shields.io/badge/benign%20accuracy-100%25-brightgreen.svg)](#results)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+<p align="center">
+  <strong>Intent-bound memory capsules for testing and hardening LLM agents against persistent memory poisoning.</strong>
+</p>
+
+<p align="center">
+  <a href="#quick-start"><img alt="Python" src="https://img.shields.io/badge/python-3.10%2B-111827"></a>
+  <a href="#testing"><img alt="Tests" src="https://img.shields.io/badge/tests-96%20passing-1f883d"></a>
+  <a href="#current-evidence"><img alt="Held-out ASR" src="https://img.shields.io/badge/held--out%20ASR-0.00%25-0f766e"></a>
+  <a href="#honest-limits"><img alt="Scope" src="https://img.shields.io/badge/scope-research%20prototype-7c2d12"></a>
+</p>
 
 ---
 
-## The Problem
+## Research Claim
 
-LLM agents that use long-term memory have a persistent attack surface. A poisoned memory stored today can be retrieved later and silently steer the agent's recommendations, preferences, or tool use — without the user ever knowing.
+Sealing Jutsu does **not** claim to solve all agent memory poisoning.
 
-Most defenses answer the wrong question. They ask *"does this memory look suspicious?"* The deeper question is:
+It tests a narrower, defensible claim: persistent memory poisoning can be reduced when every retrieved memory must prove what it is authorized to influence before it can shape planning or trigger an action.
 
-> **What is this memory allowed to influence?**
+The project treats agent memory as a security boundary, not just a vector store.
 
-## The Idea
+## Why This Exists
 
-CapsuleGuard treats persistent memory poisoning as an **authority-control problem**.
+Long-term-memory agents can be poisoned in one session and steered in another. A malicious web page, OCR document, tool result, agent summary, or experience log can be stored as memory and later retrieved as if it were normal user context.
 
-Each stored memory is compiled into a **capsule** — a bounded contract that records:
+Most baseline defenses ask:
 
-| Field | Purpose |
+> Does this memory look suspicious?
+
+Sealing Jutsu asks:
+
+> What is this memory allowed to influence?
+
+That shift is the core idea. A memory may be useful for recall while still being forbidden from authorizing recommendations, purchases, emails, file changes, or tool chains.
+
+## What It Builds
+
+The implementation compiles memory records into bounded capsules. Each capsule carries:
+
+| Capsule field | What it controls |
 |---|---|
-| `source_type` | Where the memory came from (web, tool, user, summary, experience) |
-| `kind` | What type of claim it makes (fact, preference, observation, directive) |
-| `allowed_topics` | What task domains it may influence |
-| `denied_actions` | What actions it cannot authorize |
-| `source_authority` | How much trust the source carries |
-| `influence_budget` | How much weight it can contribute to a decision |
-| `verification_count` | Whether the claim has been independently confirmed |
-| `status` | Active or sealed (quarantined) |
+| `source_type` | Whether the memory came from user input, web content, OCR, tool output, summary, or experience |
+| `kind` | Whether the memory is a fact, preference, observation, tool result, summary, or directive-like record |
+| `allowed_topics` | Which user intents the memory may influence |
+| `denied_actions` | Which actions the memory can never authorize |
+| `source_authority` | How much trust the source is allowed to carry |
+| `influence_budget` | How much decision weight the memory can contribute |
+| `verification_count` | Whether independent confirmation exists |
+| `lineage` | Whether derived memories can be traced back to their origin |
+| `status` | Whether the capsule is active or sealed |
 
-At decision time, a retrieved memory must pass the capsule contract before it can influence planning. Medium- and high-risk actions require **independent quorum support** — a single retrieved memory cannot authorize them alone.
+At decision time, the memory has to pass topic scope, authority floors, independent evidence quorum, temporal checks, lineage checks, and a final plan authorization gate.
 
-```
- Memory Store
-      │
-      ▼
- CapsuleCompiler          ← seals directives and high-risk weak sources
-      │
-      ▼
- CapsulePolicy            ← topic scope + authority floor check
-      │
-      ▼
- EvidenceQuorumGate       ← independent multi-source support required
-      │
-      ▼
- PlanAuthorizationGate    ← final plan-level contract check
-      │
-      ▼
- Agent Decision
+```text
+Raw memory
+  -> Capsule compiler
+  -> Source authority and lineage checks
+  -> Topic-scope authorization
+  -> Evidence quorum gate
+  -> Plan authorization gate
+  -> Tool/action decision
 ```
 
----
+## Current Evidence
 
-## Results
+Latest committed workflow-corpus test split:
 
-Tested across **32 attack types**, **5 trials × 12 repetitions**, with 12 noise memories per trial.
+| Agent | Attack success | Risky action | Benign accuracy | Sealing rate |
+|---|---:|---:|---:|---:|
+| Ambient memory baseline | 33.33% | 22.22% | 100.00% | 0.00% |
+| Keyword filter | 33.33% | 22.22% | 100.00% | 0.00% |
+| Provenance only | 24.38% | 16.25% | 96.25% | 0.00% |
+| Trust-score retrieval | 24.38% | 16.25% | 96.25% | 0.00% |
+| Counterfactual memory | 3.96% | 2.64% | 91.25% | 0.00% |
+| **Intent capsules** | **0.00%** | **0.00%** | **100.00%** | **8.33%** |
 
-| Agent | Attack Success Rate | Benign Accuracy | Sealing Rate |
-|---|---|---|---|
-| Ambient Memory (baseline) | 45% | 97% | 0% |
-| Keyword Filter | 41% | 97% | 0% |
-| Provenance Only | 13% | 96% | 0% |
-| Trust Score Retrieval | 13% | 96% | 0% |
-| **CapsuleGuard** | **0.00%** | **100%** | 12% |
+The corpus currently contains 120 generated workflow records across 8 domains:
 
-Ablations confirm the contribution of each layer — removing topic scope, denied actions, or quorum individually each reintroduces vulnerability.
+| Split | Records | Poisoned | Benign |
+|---|---:|---:|---:|
+| Train | 60 | 40 | 20 |
+| Dev | 24 | 16 | 8 |
+| Test | 36 | 24 | 12 |
 
----
+The benchmark includes vendor recommendation, email, calendar, file search, CRM notes, web research, OCR-style documents, and tool-chain workflows.
 
-## Installation
+## What The Hardened Tests Cover
+
+The default and corpus benchmarks are designed to stress more than simple keyword attacks:
+
+| Attack area | Coverage in this repo |
+|---|---|
+| Adaptive attackers | Closed-loop mutation mode that changes attacks after failures |
+| Delayed trigger poisoning | Memories that activate only after later task context appears |
+| Cross-session poisoning | Session and workflow records that survive into later planning |
+| Tool-chain manipulation | Tool output traces and chained action simulation |
+| Semantic paraphrase poisoning | Synonym and paraphrase-style attack variants |
+| Retrieval collision attacks | Similarity and overlap stress cases against retrieval |
+| Multimodal hidden instruction poisoning | OCR-style and document-derived hidden instruction cases |
+| Trusted-source compromise | Source-authority and lineage stress cases |
+
+## Quick Start
 
 ```bash
-git clone https://github.com/Mr-Akuma/sealing-jutsu
-cd sealing-jutsu
-pip install -r requirements.txt
+git clone https://github.com/Mr-Akuma/Sealing-Jutsu.git
+cd Sealing-Jutsu
+python -m unittest discover -s tests
 ```
 
-No external API keys required for the default adaptive-loop benchmark.
+Run the default hardened benchmark:
 
----
-
-## Usage
-
-**Run the full benchmark:**
 ```bash
 python run_capsuleguard.py
 ```
 
-The default mode is `adaptive_loop`.
+Run the held-out workflow-corpus test split:
 
-**Run the poisoning stress test (generated holdout):**
 ```bash
 python run_capsuleguard.py \
-  --attack-mode generated_holdout \
-  --trials 5 --repetitions 12 --noise-memories 12 \
-  --seed 2026 \
-  --summary-csv results/summary.csv
+  --attack-mode workflow_corpus \
+  --workflow-corpus data/workflow_corpus_splits/test.jsonl \
+  --summary-csv results/workflow_corpus_test_split_summary.csv \
+  --trace-jsonl results/workflow_corpus_test_split_traces.jsonl \
+  --tool-trace-csv results/workflow_corpus_test_split_tool_traces.csv \
+  --charts-dir results/workflow_corpus_test_split_charts
 ```
 
-**Other attack modes:**
+Generate a fresh workflow corpus:
+
+```bash
+python generate_workflow_corpus.py \
+  --out-dir data/workflow_corpus_splits \
+  --train-count 60 \
+  --dev-count 24 \
+  --test-count 36 \
+  --seed 2026
+```
+
+## Benchmark Modes
+
 ```bash
 python run_capsuleguard.py --attack-mode moderate
 python run_capsuleguard.py --attack-mode insane
 python run_capsuleguard.py --attack-mode extreme
 python run_capsuleguard.py --attack-mode holdout
 python run_capsuleguard.py --attack-mode adaptive_loop
-python run_capsuleguard.py --attack-mode workflow_corpus --workflow-corpus data/workflow_corpus.jsonl
-python generate_workflow_corpus.py --out-dir data/workflow_corpus_splits --train-count 60 --dev-count 24 --test-count 36 --seed 2026
 python run_capsuleguard.py --attack-mode workflow_corpus --workflow-corpus data/workflow_corpus_splits/test.jsonl
 python run_capsuleguard.py --attack-mode multimodal
 python run_capsuleguard.py --attack-mode attacker_generated
 ```
 
-**Sensitivity sweep:**
+Sensitivity sweep:
+
 ```bash
 python run_sensitivity.py --attack-mode generated_holdout
 ```
 
-**LLM provider experiment (OpenAI-compatible or Ollama):**
+LLM-provider experiment harness:
+
 ```bash
 python run_llm_experiment.py --provider local
 python run_llm_experiment.py --provider ollama --endpoint http://localhost:11434/api/generate --model llama3.1
 ```
-
----
 
 ## Testing
 
@@ -137,60 +174,55 @@ python run_llm_experiment.py --provider ollama --endpoint http://localhost:11434
 python -m unittest discover -s tests
 ```
 
-```
+Expected current result:
+
+```text
 Ran 96 tests
 OK
 ```
 
----
-
 ## Output Files
 
-Each run produces:
+Benchmark runs write CSV, JSONL, and chart artifacts under `results/`.
 
-```
+```text
 results/
-├── capsule_sandbox_results.csv      ← per-trial metrics
-├── capsule_sandbox_summary.csv      ← aggregated summary with CI95
-├── capsule_attack_breakdown.csv     ← per-attack-type breakdown
-├── capsule_gap_closure.csv          ← baseline vs defense gap analysis
-├── capsule_tool_traces.csv          ← tool action trace log
-└── charts/                          ← SVG charts per metric
+  capsule_sandbox_results.csv
+  capsule_sandbox_summary.csv
+  capsule_attack_breakdown.csv
+  capsule_gap_closure.csv
+  capsule_tool_traces.csv
+  workflow_corpus_test_split_summary.csv
+  workflow_corpus_test_split_traces.jsonl
+  workflow_corpus_test_split_tool_traces.csv
+  workflow_corpus_test_split_charts/
 ```
 
----
+## Project Layout
 
-## Agents Compared
+```text
+capsule_guard/                 Core capsule compiler, policy gates, agents, metrics
+data/                          Generated workflow corpora and benchmark splits
+docs/                          Research notes, benchmark reports, operating guides
+experiments/                   Experiment entry points and wrappers
+paper/                         Conference-style draft material
+results/                       Generated benchmark outputs
+tests/                         Unit and regression tests
+run_capsuleguard.py            Main benchmark runner
+generate_workflow_corpus.py    Corpus generation entry point
+```
 
-| Agent | Description |
-|---|---|
-| `ambient_memory` | No defense — full retrieval |
-| `keyword_filter` | Block memories with suspicious words |
-| `quarantine_only` | Quarantine flagged memories |
-| `trust_score_retrieval` | Weight by source trust score |
-| `output_moderation` | Filter final output |
-| `counterfactual_memory` | Counterfactual relevance check |
-| `provenance_only` | Provenance tracking only |
-| `intent_capsules` | **CapsuleGuard** (full system) |
-| `ablation_no_topic_scope` | CapsuleGuard without topic scope |
-| `ablation_no_denied_actions` | CapsuleGuard without action denial |
-| `ablation_no_quorum` | CapsuleGuard without quorum gate |
+## Honest Limits
 
----
+This is a research prototype. The current evidence is strong inside the simulator, but several production gaps remain:
+
+1. The workflow corpus is generated, not collected from real enterprise agent traces.
+2. The default planner is deterministic; the LLM experiment harness exists, but live model studies need to be run and reported separately.
+3. OCR and multimodal attacks are represented as extracted text, not full raw-image pipelines.
+4. Source labels are modeled as metadata; real deployments need signed, append-only provenance.
+5. Policy thresholds are still research parameters and need calibration on real workloads.
+6. Real browser, email, database, and account side effects should be tested in isolated sandboxes before deployment claims.
 
 ## Paper
 
-See [`paper/CAPSULEGUARD_CONFERENCE_DRAFT.md`](paper/CAPSULEGUARD_CONFERENCE_DRAFT.md) for the full write-up.
-
----
-
-## Planned for Future Release
-
-1. Real attacks against live LLM endpoints.
-2. Real tool execution and side-effect tracing.
-3. Real multimodal and OCR input processing.
-4. Multi-agent shared memory with cross-agent quorum.
-5. Live external LLM benchmark runs (GPT-4o, Claude).
-6. Production FAISS / Chroma / LanceDB vector backend.
-7. Real image parsing and OCR model integration.
-8. Real browser and account automation testing.
+See [`paper/CAPSULEGUARD_CONFERENCE_DRAFT.md`](paper/CAPSULEGUARD_CONFERENCE_DRAFT.md) for the paper-style write-up.
