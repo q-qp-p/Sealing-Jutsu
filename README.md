@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/sealing-jutsu-banner.svg" alt="Sealing Jutsu project banner" width="100%">
+  <img src="assets/sealing-jutsu-banner.png" alt="Sealing Jutsu project banner" width="100%">
 </p>
 
 <h1 align="center">Sealing Jutsu</h1>
