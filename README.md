@@ -82,7 +82,7 @@ cd sealing-jutsu
 pip install -r requirements.txt
 ```
 
-No external API keys required for the default synthetic benchmark.
+No external API keys required for the default adaptive-loop benchmark.
 
 ---
 
@@ -92,6 +92,8 @@ No external API keys required for the default synthetic benchmark.
 ```bash
 python run_capsuleguard.py
 ```
+
+The default mode is `adaptive_loop`.
 
 **Run the poisoning stress test (generated holdout):**
 ```bash
@@ -109,6 +111,9 @@ python run_capsuleguard.py --attack-mode insane
 python run_capsuleguard.py --attack-mode extreme
 python run_capsuleguard.py --attack-mode holdout
 python run_capsuleguard.py --attack-mode adaptive_loop
+python run_capsuleguard.py --attack-mode workflow_corpus --workflow-corpus data/workflow_corpus.jsonl
+python generate_workflow_corpus.py --out-dir data/workflow_corpus_splits --train-count 60 --dev-count 24 --test-count 36 --seed 2026
+python run_capsuleguard.py --attack-mode workflow_corpus --workflow-corpus data/workflow_corpus_splits/test.jsonl
 python run_capsuleguard.py --attack-mode multimodal
 python run_capsuleguard.py --attack-mode attacker_generated
 ```
@@ -133,7 +138,7 @@ python -m unittest discover -s tests
 ```
 
 ```
-Ran 76 tests in 0.121s
+Ran 96 tests
 OK
 ```
 

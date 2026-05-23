@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
 import random
 
 from capsule_guard.models import MemorySeed, SourceType
@@ -1454,6 +1455,7 @@ def generate_scenarios(
     noise_memories: int = 0,
     seed: int = 0,
     attack_mode: str = "moderate",
+    workflow_corpus_path: str | Path | None = None,
 ) -> list[Scenario]:
     rng = random.Random(seed)
     cases: list[Scenario] = []
@@ -1482,6 +1484,10 @@ def generate_scenarios(
         from capsule_guard.adaptive_attacker import ClosedLoopAdaptiveAttacker
 
         templates = templates + ClosedLoopAdaptiveAttacker(seed=seed, max_steps=6).generate_scenarios()
+    elif attack_mode == "workflow_corpus":
+        from capsule_guard.workflow_corpus import load_workflow_corpus_scenarios
+
+        templates = load_workflow_corpus_scenarios(workflow_corpus_path)
     elif attack_mode != "moderate":
         raise ValueError(f"Unsupported attack_mode: {attack_mode}")
     for repetition in range(repetitions):

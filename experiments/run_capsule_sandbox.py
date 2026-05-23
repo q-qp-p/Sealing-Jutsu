@@ -36,6 +36,7 @@ ATTACK_MODE_CHOICES = (
     "multimodal",
     "attacker_generated",
     "adaptive_loop",
+    "workflow_corpus",
 )
 
 ATTACK_MODE_DEFINITIONS = {
@@ -55,6 +56,10 @@ ATTACK_MODE_DEFINITIONS = {
     "adaptive_loop": (
         "Closed-loop adaptive attacker that observes policy failures and mutates the next memory "
         "poisoning attempt."
+    ),
+    "workflow_corpus": (
+        "Loads scenarios from an external JSONL workflow corpus with session events, memory provenance, "
+        "poison labels, expected outcomes, and source metadata."
     ),
 }
 
@@ -87,6 +92,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--gap-closure-csv", type=Path, default=Path("results") / "capsule_gap_closure.csv")
     parser.add_argument("--tool-trace-csv", type=Path, default=Path("results") / "capsule_tool_traces.csv")
     parser.add_argument("--charts-dir", type=Path, default=Path("results") / "charts")
+    parser.add_argument(
+        "--workflow-corpus",
+        type=Path,
+        default=Path("data") / "workflow_corpus.jsonl",
+        help="JSONL workflow corpus used when --attack-mode workflow_corpus.",
+    )
     parser.add_argument("--no-ablations", action="store_true", help="Skip ablation agents.")
     return parser
 
@@ -94,7 +105,10 @@ def build_parser() -> argparse.ArgumentParser:
 def write_attack_mode_definition(attack_mode: str, output: TextIO | None = None) -> None:
     stream = output or sys.stdout
     definition = ATTACK_MODE_DEFINITIONS.get(attack_mode, "Custom benchmark mode.")
-    print("Hard-coded benchmark", file=stream)
+    if attack_mode == "workflow_corpus":
+        print("external JSONL workflow corpus benchmark", file=stream)
+    else:
+        print("Hard-coded benchmark", file=stream)
     print(f"Mode: {attack_mode}", file=stream)
     print(f"Definition: {definition}", file=stream)
     if attack_mode == "adaptive_loop":
@@ -120,6 +134,7 @@ def main() -> None:
             noise_memories=args.noise_memories,
             seed=args.seed + trial,
             attack_mode=args.attack_mode,
+            workflow_corpus_path=args.workflow_corpus,
         )
         latest_trial_metrics = []
         for agent_name, agent_factory in default_agent_factories(include_ablations=not args.no_ablations):

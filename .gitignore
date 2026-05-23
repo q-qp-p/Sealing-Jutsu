@@ -1,5 +1,6 @@
 # Large trace files - too big for GitHub
 results/*.jsonl
+results/*tool_traces.csv
 
 # Python
 __pycache__/
