@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import json
+import re
 from typing import Callable
 
 from capsule_guard.models import MemoryCapsule, Plan, UserIntent
 from capsule_guard.policy import extract_recommendation, majority_recommendation
-from capsule_guard.risk import action_risk, extract_action
+from capsule_guard.risk import HIGH_RISK_ACTIONS, MEDIUM_RISK_ACTIONS, action_risk, extract_action
 from capsule_guard.text import jaccard, topic_terms
 
 
@@ -73,14 +74,19 @@ LLMProvider = Callable[[str], dict[str, str] | str]
 class LLMPlanner:
     def __init__(self, provider: LLMProvider) -> None:
         self.provider = provider
+        self.last_raw_output = ""
+        self.last_parse_error = ""
 
     def plan(self, intent: UserIntent, capsules: list[MemoryCapsule]) -> Plan:
+        self.last_raw_output = ""
+        self.last_parse_error = ""
         prompt = self._prompt(intent, capsules)
         raw = self.provider(prompt)
         parsed = self._parse_provider_output(raw)
-        action = parsed.get("action") or intent.requested_action
+        recommendation = self._normalize_recommendation(parsed.get("recommendation", ""))
+        action = self._normalize_action(parsed.get("action", ""), missing_fallback=intent.requested_action)
         return Plan(
-            recommendation=(parsed.get("recommendation") or "neutral_option").lower(),
+            recommendation=recommendation,
             action=action,
             action_risk=action_risk(action),
             used_capsule_ids=tuple(capsule.id for capsule in capsules),
@@ -99,11 +105,52 @@ class LLMPlanner:
 
     def _parse_provider_output(self, raw: dict[str, str] | str) -> dict[str, str]:
         if isinstance(raw, dict):
+            self.last_raw_output = json.dumps(raw, sort_keys=True)
             return {str(key): str(value) for key, value in raw.items()}
+        self.last_raw_output = raw
+        json_text = self._extract_json_object(raw)
         try:
-            parsed = json.loads(raw)
+            parsed = json.loads(json_text)
         except json.JSONDecodeError:
+            self.last_parse_error = "json_parse_error"
             return {"recommendation": "neutral_option", "action": "answer", "rationale": raw}
         if not isinstance(parsed, dict):
+            self.last_parse_error = "json_not_object"
             return {"recommendation": "neutral_option", "action": "answer", "rationale": raw}
         return {str(key): str(value) for key, value in parsed.items()}
+
+    def _extract_json_object(self, raw: str) -> str:
+        stripped = raw.strip()
+        fence = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", stripped, flags=re.DOTALL | re.IGNORECASE)
+        if fence:
+            return fence.group(1)
+        start = stripped.find("{")
+        end = stripped.rfind("}")
+        if start >= 0 and end > start:
+            return stripped[start : end + 1]
+        return stripped
+
+    def _normalize_recommendation(self, value: str) -> str:
+        if not value:
+            return "neutral_option"
+        extracted = extract_recommendation(value)
+        if extracted != "neutral_option":
+            return extracted
+        normalized = value.strip().lower().replace(" ", "_")
+        return normalized or "neutral_option"
+
+    def _normalize_action(self, value: str, *, missing_fallback: str) -> str:
+        if not value:
+            return missing_fallback
+        action = value.strip().lower()
+        valid_actions = {"answer", *MEDIUM_RISK_ACTIONS, *HIGH_RISK_ACTIONS}
+        if action in valid_actions:
+            return action
+        self.last_parse_error = _append_parse_error(self.last_parse_error, f"invalid_action:{action}")
+        return "answer"
+
+
+def _append_parse_error(existing: str, new_error: str) -> str:
+    if not existing:
+        return new_error
+    return f"{existing};{new_error}"
