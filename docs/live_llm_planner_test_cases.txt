@@ -7,6 +7,9 @@ This file lists the live LLM planner test cases used to evaluate whether the mem
 Live LLM Command
 python run_llm_experiment.py --provider ollama --models llama3,mistral,phi3 --repetitions 3 --output-csv results\live_llm_planner_suite.csv --summary-csv results\live_llm_planner_summary.csv --model-summary-csv results\live_llm_planner_model_summary.csv
 
+Planner JSON Mode
+The Ollama live provider sends format=json with temperature 0, and the planner prompt asks for exactly one minified strict JSON object with only recommendation, action, and rationale. This is the deployment-style path. The repair path remains as a resilience fallback, not the normal mechanism.
+
 Models Tested
 llama3
 mistral
@@ -60,6 +63,9 @@ final_llm_output: the response used after a strict JSON retry, if a retry was ne
 parsed_recommendation: the recommendation accepted by the planner after validation.
 parsed_action: the action accepted by the planner after validation.
 raw_parse_error: the validation error found in the raw model output.
+raw_provider_parse_error: whether the first model output failed JSON parsing before schema validation.
+raw_validation_error: whether the first model output parsed as JSON but failed planner schema/action validation.
+first_pass_valid_planner_result: whether the first model output was accepted without retry or deterministic schema repair.
 parse_error: the remaining validation error after retry and deterministic schema repair.
 json_repair_attempted: whether the model was asked to repair its output into strict JSON.
 json_repair_succeeded: whether the LLM retry itself produced a valid planner object.
@@ -87,23 +93,29 @@ The visible jailbreak-style prompt had ASR 0.00 in this run, but it still remain
 
 Latest Strict-Repair Snapshot
 capsule_filtered_prompt ASR: 0.00
+capsule_filtered_prompt raw parse error rate: 0.00
+capsule_filtered_prompt first-pass JSON parse error rate: 0.00
+capsule_filtered_prompt first-pass schema error rate: 0.00
+capsule_filtered_prompt first-pass valid planner rate: 1.00
 capsule_filtered_prompt final parse error rate: 0.00
 capsule_filtered_prompt valid planner rate: 1.00
-capsule_filtered_prompt schema repair rate: 0.1667
-capsule_filtered_prompt repair drift rate: 0.0556
+capsule_filtered_prompt schema repair rate: 0.00
+capsule_filtered_prompt repair drift rate: 0.00
 ambient_prompt final parse error rate: 0.00
 jailbreak_style_prompt final parse error rate: 0.00
 
 Latest Phi3 Defended Parser Snapshot
 phi3 capsule_filtered_prompt ASR: 0.00
+phi3 capsule_filtered_prompt raw parse error rate: 0.00
+phi3 capsule_filtered_prompt first-pass valid planner rate: 1.00
 phi3 capsule_filtered_prompt final parse error rate: 0.00
 phi3 capsule_filtered_prompt valid planner rate: 1.00
-phi3 capsule_filtered_prompt JSON repair success rate: 0.50
-phi3 capsule_filtered_prompt deterministic schema repair rate: 0.50
-phi3 capsule_filtered_prompt retry drift rate: 0.1667
+phi3 capsule_filtered_prompt JSON repair attempt rate: 0.00
+phi3 capsule_filtered_prompt deterministic schema repair rate: 0.00
+phi3 capsule_filtered_prompt retry drift rate: 0.00
 
 Interpretation of raw parse errors
-The raw parse error rate is intentionally reported separately from final parse error rate. It shows how often live models failed the strict planner schema on their first attempt. The final parse error rate is the more important usability metric after retry and schema repair.
+The raw parse error rate is intentionally reported separately from final parse error rate. It shows how often live models failed the planner schema on their first attempt. The live JSON-mode run now also reports first_pass_json_parse_error_rate and first_pass_schema_error_rate so reviewers can distinguish syntax failures from schema/action validation failures.
 
 Regression Test Files Added For This LLM Upgrade
 tests\test_llm_planner_full_experiment.py
