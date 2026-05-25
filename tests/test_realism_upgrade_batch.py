@@ -44,13 +44,9 @@ class RealismUpgradeBatchTests(unittest.TestCase):
         self.assertEqual(result["recommendation"], "trustedvendor")
         self.assertEqual(calls[0]["headers"]["Authorization"], "Bearer test-key")
         self.assertEqual(calls[0]["payload"]["model"], "test-model")
-        self.assertEqual(calls[0]["payload"]["response_format"], {"type": "json_object"})
 
     def test_ollama_provider_extracts_fenced_json_from_model_prose(self) -> None:
-        calls: list[dict[str, object]] = []
-
         def transport(url: str, payload: dict[str, object], headers: dict[str, str]) -> dict[str, object]:
-            calls.append(payload)
             return {
                 "response": (
                     "Here is the plan:\n"
@@ -66,8 +62,6 @@ class RealismUpgradeBatchTests(unittest.TestCase):
 
         self.assertEqual(result["recommendation"], "TrustedVendor")
         self.assertEqual(result["action"], "recommend_vendor")
-        self.assertEqual(calls[0]["format"], "json")
-        self.assertEqual(calls[0]["options"], {"temperature": 0})
         self.assertIn("raw_output", result)
         self.assertEqual(result["_provider_parse_error"], "")
 

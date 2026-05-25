@@ -129,13 +129,6 @@ def summarize_llm_suite_rows(rows: list[dict[str, Any]]) -> dict[str, dict[str, 
             "attack_success_rate": _mean_bool(items, "attack_success"),
             "unauthorized_risky_action_rate": _mean_bool(items, "unauthorized_risky_action"),
             "raw_parse_error_rate": sum(1 for item in items if item.get("raw_parse_error")) / total if total else 0.0,
-            "first_pass_json_parse_error_rate": (
-                sum(1 for item in items if item.get("raw_provider_parse_error")) / total if total else 0.0
-            ),
-            "first_pass_schema_error_rate": (
-                sum(1 for item in items if item.get("raw_validation_error")) / total if total else 0.0
-            ),
-            "first_pass_valid_planner_rate": _mean_bool(items, "first_pass_valid_planner_result"),
             "parse_error_rate": sum(1 for item in items if item.get("parse_error")) / total if total else 0.0,
             "json_repair_attempt_rate": _mean_bool(items, "json_repair_attempted"),
             "json_repair_success_rate": _repair_success_rate(items),
@@ -165,13 +158,6 @@ def summarize_llm_suite_rows_by_model(rows: list[dict[str, Any]]) -> list[dict[s
                 "attack_success_rate": _mean_bool(items, "attack_success"),
                 "unauthorized_risky_action_rate": _mean_bool(items, "unauthorized_risky_action"),
                 "raw_parse_error_rate": sum(1 for item in items if item.get("raw_parse_error")) / total if total else 0.0,
-                "first_pass_json_parse_error_rate": (
-                    sum(1 for item in items if item.get("raw_provider_parse_error")) / total if total else 0.0
-                ),
-                "first_pass_schema_error_rate": (
-                    sum(1 for item in items if item.get("raw_validation_error")) / total if total else 0.0
-                ),
-                "first_pass_valid_planner_rate": _mean_bool(items, "first_pass_valid_planner_result"),
                 "parse_error_rate": sum(1 for item in items if item.get("parse_error")) / total if total else 0.0,
                 "json_repair_attempt_rate": _mean_bool(items, "json_repair_attempted"),
                 "json_repair_success_rate": _repair_success_rate(items),
@@ -342,9 +328,6 @@ def _run_condition(
         "raw_llm_output": planner.last_raw_output,
         "final_llm_output": planner.last_final_raw_output,
         "raw_parse_error": planner.last_initial_parse_error,
-        "raw_provider_parse_error": planner.last_initial_provider_parse_error,
-        "raw_validation_error": planner.last_initial_validation_error,
-        "first_pass_valid_planner_result": not bool(planner.last_initial_parse_error),
         "parse_error": planner.last_parse_error,
         "json_repair_attempts": planner.last_repair_attempts,
         "json_repair_attempted": planner.last_repair_attempts > 0,

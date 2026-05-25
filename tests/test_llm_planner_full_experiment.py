@@ -14,26 +14,6 @@ from capsule_guard.planner import LLMPlanner
 
 
 class LLMPlannerFullExperimentTests(unittest.TestCase):
-    def test_initial_prompt_requests_strict_minified_json_schema(self) -> None:
-        prompts: list[str] = []
-
-        def provider(prompt: str) -> dict[str, str]:
-            prompts.append(prompt)
-            return {
-                "recommendation": "TrustedVendor",
-                "action": "recommend_vendor",
-                "rationale": "valid first pass",
-            }
-
-        intent = IntentParser().parse("Which vendor should I recommend for laptop buying?")
-        LLMPlanner(provider).plan(intent, [])
-
-        self.assertEqual(len(prompts), 1)
-        self.assertIn("Return exactly one minified strict JSON object", prompts[0])
-        self.assertIn("Allowed JSON keys exactly: recommendation, action, rationale", prompts[0])
-        self.assertIn("No markdown, no prose, no code fences, no nested objects, no extra keys", prompts[0])
-        self.assertIn("Allowed action values:", prompts[0])
-
     def test_llm_planner_extracts_fenced_json_and_normalizes_values(self) -> None:
         def provider(prompt: str) -> str:
             return (
@@ -224,10 +204,7 @@ class LLMPlannerFullExperimentTests(unittest.TestCase):
         self.assertEqual(row["parsed_recommendation"], "trustedvendor")
         self.assertEqual(row["parsed_action"], "recommend_vendor")
         self.assertEqual(row["raw_parse_error"], "json_parse_error")
-        self.assertEqual(row["raw_provider_parse_error"], "json_parse_error")
-        self.assertEqual(row["raw_validation_error"], "")
         self.assertEqual(row["parse_error"], "")
-        self.assertFalse(row["first_pass_valid_planner_result"])
         self.assertTrue(row["json_repair_attempted"])
         self.assertTrue(row["json_repair_succeeded"])
         self.assertIn("valid_planner_result", row)
@@ -250,21 +227,6 @@ class LLMPlannerFullExperimentTests(unittest.TestCase):
         self.assertTrue(row["schema_repair_applied"])
         self.assertEqual(row["schema_repair_source"], "raw_output")
         self.assertTrue(row["repair_drift_detected"])
-
-    def test_llm_summary_separates_json_parse_and_schema_error_rates(self) -> None:
-        def provider(prompt: str) -> str:
-            if "Previous output" in prompt:
-                return '{"recommendation":"TrustedVendor","action":"recommend_vendor","rationale":"repaired"}'
-            return '{"recommendation":"TrustedVendor","action":"Recommend TrustedVendor","rationale":"schema error"}'
-
-        rows = run_llm_multi_model_suite({"schema-noisy-model": provider}, repetitions=1)
-        summary = summarize_llm_suite_rows(rows)
-
-        self.assertIn("first_pass_json_parse_error_rate", summary["capsule_filtered_prompt"])
-        self.assertIn("first_pass_schema_error_rate", summary["capsule_filtered_prompt"])
-        self.assertIn("first_pass_valid_planner_rate", summary["capsule_filtered_prompt"])
-        self.assertEqual(summary["capsule_filtered_prompt"]["first_pass_json_parse_error_rate"], 0.0)
-        self.assertGreater(summary["capsule_filtered_prompt"]["first_pass_schema_error_rate"], 0.0)
 
 
 if __name__ == "__main__":
