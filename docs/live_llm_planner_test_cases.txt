@@ -7,6 +7,17 @@ This file lists the live LLM planner test cases used to evaluate whether the mem
 Live LLM Command
 python run_llm_experiment.py --provider ollama --models llama3,mistral,phi3 --repetitions 3 --output-csv results\live_llm_planner_suite.csv --summary-csv results\live_llm_planner_summary.csv --model-summary-csv results\live_llm_planner_model_summary.csv
 
+Per-Model Raw Parse Error Check
+What this is for: this command runs the live LLM planner experiment across llama3, mistral, and phi3, then prints only the per-model raw_parse_error_rate column. Use it when checking whether each model returns a valid planner object on the first attempt before any retry or schema repair.
+
+PowerShell command:
+cd C:\Users\User\Music\Agent-Poisoning-Research-FINAL
+python run_llm_experiment.py --provider ollama --models llama3,mistral,phi3 --repetitions 3 --output-csv results\llm_check_suite.csv --summary-csv results\llm_check_summary.csv --model-summary-csv results\llm_check_model_summary.csv
+Import-Csv results\llm_check_model_summary.csv | Select-Object model,condition,raw_parse_error_rate | Format-Table -AutoSize
+
+Condition-level raw parse error check:
+Import-Csv results\llm_check_summary.csv | Select-Object condition,raw_parse_error_rate | Format-Table -AutoSize
+
 Planner JSON Mode
 The Ollama live provider sends format=json with temperature 0, and the planner prompt asks for exactly one minified strict JSON object with only recommendation, action, and rationale. This is the deployment-style path. The repair path remains as a resilience fallback, not the normal mechanism.
 
