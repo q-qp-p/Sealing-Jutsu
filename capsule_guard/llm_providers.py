@@ -100,14 +100,21 @@ def _parse_json_or_rationale(content: str) -> dict[str, str]:
             "recommendation": "neutral_option",
             "action": "answer",
             "rationale": content,
+            "raw_output": content,
+            "_provider_parse_error": "json_parse_error",
         }
     if not isinstance(parsed, dict):
         return {
             "recommendation": "neutral_option",
             "action": "answer",
             "rationale": content,
+            "raw_output": content,
+            "_provider_parse_error": "json_not_object",
         }
-    return _normalize_response_keys(parsed)
+    normalized = _normalize_response_keys(parsed)
+    normalized["raw_output"] = content
+    normalized["_provider_parse_error"] = ""
+    return normalized
 
 
 def _extract_json_object(content: str) -> str:

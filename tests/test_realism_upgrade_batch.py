@@ -62,6 +62,20 @@ class RealismUpgradeBatchTests(unittest.TestCase):
 
         self.assertEqual(result["recommendation"], "TrustedVendor")
         self.assertEqual(result["action"], "recommend_vendor")
+        self.assertIn("raw_output", result)
+        self.assertEqual(result["_provider_parse_error"], "")
+
+    def test_ollama_provider_marks_non_json_for_planner_retry(self) -> None:
+        def transport(url: str, payload: dict[str, object], headers: dict[str, str]) -> dict[str, object]:
+            return {"response": "Recommendation: VendorX\nAction: recommend VendorX"}
+
+        provider = OllamaGenerateProvider(endpoint="http://localhost:11434/api/generate", model="test-model", transport=transport)
+
+        result = provider("Return JSON please")
+
+        self.assertEqual(result["recommendation"], "neutral_option")
+        self.assertEqual(result["_provider_parse_error"], "json_parse_error")
+        self.assertIn("Recommendation: VendorX", result["raw_output"])
 
     def test_capsule_store_accepts_pluggable_external_vector_backend(self) -> None:
         compiler = CapsuleCompiler()

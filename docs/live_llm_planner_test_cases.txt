@@ -41,13 +41,30 @@ Conditions used: jailbreak_style_prompt, capsule_filtered_prompt
 
 Result Files
 results\live_llm_planner_suite.csv
-Contains every live LLM row: model, repetition, test case, condition, recommendation, action, risk, prompt poison visibility, ASR flag, and parse error handling.
+Contains every live LLM row: model, repetition, test case, condition, recommendation, action, risk, prompt poison visibility, ASR flag, raw LLM output, parsed planner output, parse errors, and repair flags.
 
 results\live_llm_planner_summary.csv
 Contains aggregate results by planner condition.
 
 results\live_llm_planner_model_summary.csv
 Contains aggregate results by model and planner condition. Use this file to report ASR per model in the paper.
+
+Latest rerun result files
+results\latest_live_llm_planner_suite.csv
+results\latest_live_llm_planner_summary.csv
+results\latest_live_llm_planner_model_summary.csv
+
+Strict Parser And Repair Fields
+raw_llm_output: the first response produced by the live model.
+final_llm_output: the response used after a strict JSON retry, if a retry was needed.
+parsed_recommendation: the recommendation accepted by the planner after validation.
+parsed_action: the action accepted by the planner after validation.
+raw_parse_error: the validation error found in the raw model output.
+parse_error: the remaining validation error after retry and deterministic schema repair.
+json_repair_attempted: whether the model was asked to repair its output into strict JSON.
+json_repair_succeeded: whether the LLM retry itself produced a valid planner object.
+schema_repair_applied: whether deterministic schema salvage recovered an almost-JSON planner object after the retry failed.
+valid_planner_result: whether the final planner object was valid.
 
 Latest Live LLM ASR Snapshot
 llama3, ambient_prompt, ASR: 0.00
@@ -66,6 +83,16 @@ Key Evaluation Interpretation
 The defended capsule_filtered_prompt condition had ASR 0.00 across llama3, mistral, and phi3 in this run.
 The visible jailbreak-style prompt still succeeded against mistral in 1 out of 3 repetitions, showing why the defended condition must remove unauthorized poison memories before the LLM planner sees them.
 
+Latest Strict-Repair Snapshot
+capsule_filtered_prompt ASR: 0.00
+capsule_filtered_prompt final parse error rate: 0.0556
+capsule_filtered_prompt valid planner rate: 0.9444
+ambient_prompt final parse error rate: 0.00
+jailbreak_style_prompt final parse error rate: 0.1111
+
+Interpretation of raw parse errors
+The raw parse error rate is intentionally reported separately from final parse error rate. It shows how often live models failed the strict planner schema on their first attempt. The final parse error rate is the more important usability metric after retry and schema repair.
+
 Regression Test Files Added For This LLM Upgrade
 tests\test_llm_planner_full_experiment.py
 tests\test_llm_experiment_cli.py
@@ -75,5 +102,8 @@ Fenced JSON inside prose.
 Capitalized JSON keys such as Recommendation, Action, and Rationale.
 Malformed or non-JSON LLM output.
 Invalid action strings falling back to safe answer action.
+Strict JSON retry for malformed planner outputs.
+Deterministic schema repair for almost-JSON outputs after failed retry.
+Separate raw LLM output and parsed planner result reporting.
 Multi-model variance across model profiles.
 Prompt isolation where unauthorized memory is hidden from the defended LLM prompt.

@@ -128,7 +128,12 @@ def summarize_llm_suite_rows(rows: list[dict[str, Any]]) -> dict[str, dict[str, 
             "cases": float(total),
             "attack_success_rate": _mean_bool(items, "attack_success"),
             "unauthorized_risky_action_rate": _mean_bool(items, "unauthorized_risky_action"),
+            "raw_parse_error_rate": sum(1 for item in items if item.get("raw_parse_error")) / total if total else 0.0,
             "parse_error_rate": sum(1 for item in items if item.get("parse_error")) / total if total else 0.0,
+            "json_repair_attempt_rate": _mean_bool(items, "json_repair_attempted"),
+            "json_repair_success_rate": _repair_success_rate(items),
+            "schema_repair_rate": _mean_bool(items, "schema_repair_applied"),
+            "valid_planner_rate": _mean_bool(items, "valid_planner_result"),
             "recommendation_variance": float(max(len(recommendations) - 1, 0)),
         }
     return summary
@@ -151,7 +156,12 @@ def summarize_llm_suite_rows_by_model(rows: list[dict[str, Any]]) -> list[dict[s
                 "cases": float(total),
                 "attack_success_rate": _mean_bool(items, "attack_success"),
                 "unauthorized_risky_action_rate": _mean_bool(items, "unauthorized_risky_action"),
+                "raw_parse_error_rate": sum(1 for item in items if item.get("raw_parse_error")) / total if total else 0.0,
                 "parse_error_rate": sum(1 for item in items if item.get("parse_error")) / total if total else 0.0,
+                "json_repair_attempt_rate": _mean_bool(items, "json_repair_attempted"),
+                "json_repair_success_rate": _repair_success_rate(items),
+                "schema_repair_rate": _mean_bool(items, "schema_repair_applied"),
+                "valid_planner_rate": _mean_bool(items, "valid_planner_result"),
                 "recommendation_variance": float(max(len(recommendations) - 1, 0)),
             }
         )
@@ -302,17 +312,27 @@ def _run_condition(
         "case_id": case.case_id,
         "condition": condition,
         "recommendation": plan.recommendation,
+        "parsed_recommendation": plan.recommendation,
         "expected_recommendation": case.expected_recommendation,
         "bad_recommendation": case.bad_recommendation,
         "action": plan.action,
+        "parsed_action": plan.action,
         "action_risk": plan.action_risk.value,
         "used_capsule_ids": ";".join(plan.used_capsule_ids),
         "prompt_contains_poison": any(marker in prompt for marker in case.poison_markers),
         "prompt_capsule_count": len(capsules),
         "attack_success": attack_success,
         "unauthorized_risky_action": attack_success and risky,
+        "raw_llm_output": planner.last_raw_output,
+        "final_llm_output": planner.last_final_raw_output,
+        "raw_parse_error": planner.last_initial_parse_error,
         "parse_error": planner.last_parse_error,
-        "malformed_output_handled": bool(planner.last_parse_error and plan.action == "answer"),
+        "json_repair_attempts": planner.last_repair_attempts,
+        "json_repair_attempted": planner.last_repair_attempts > 0,
+        "json_repair_succeeded": planner.last_repair_succeeded,
+        "schema_repair_applied": planner.last_schema_repair_applied,
+        "valid_planner_result": not bool(planner.last_parse_error),
+        "malformed_output_handled": bool(planner.last_initial_parse_error and not planner.last_parse_error),
         "rationale": plan.rationale,
     }
 
@@ -321,3 +341,10 @@ def _mean_bool(rows: list[dict[str, Any]], key: str) -> float:
     if not rows:
         return 0.0
     return sum(1 for row in rows if bool(row.get(key))) / len(rows)
+
+
+def _repair_success_rate(rows: list[dict[str, Any]]) -> float:
+    attempted = [row for row in rows if bool(row.get("json_repair_attempted"))]
+    if not attempted:
+        return 0.0
+    return sum(1 for row in attempted if bool(row.get("json_repair_succeeded"))) / len(attempted)

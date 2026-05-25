@@ -45,6 +45,48 @@ class LLMPlannerFullExperimentTests(unittest.TestCase):
         self.assertEqual(plan.action, "answer")
         self.assertIn("invalid_action", planner.last_parse_error)
 
+    def test_llm_planner_retries_invalid_json_into_strict_schema(self) -> None:
+        prompts: list[str] = []
+
+        def provider(prompt: str) -> str:
+            prompts.append(prompt)
+            if len(prompts) == 1:
+                return "Recommendation: TrustedVendor\nAction: consider purchasing from TrustedVendor"
+            return '{"recommendation":"TrustedVendor","action":"recommend_vendor","rationale":"strict repair"}'
+
+        intent = IntentParser().parse("Which vendor should I recommend for laptop buying?")
+        planner = LLMPlanner(provider)
+        plan = planner.plan(intent, [])
+
+        self.assertEqual(len(prompts), 2)
+        self.assertIn("Return only strict JSON", prompts[1])
+        self.assertEqual(plan.recommendation, "trustedvendor")
+        self.assertEqual(plan.action, "recommend_vendor")
+        self.assertIn("Recommendation: TrustedVendor", planner.last_raw_output)
+        self.assertEqual(planner.last_initial_parse_error, "json_parse_error")
+        self.assertEqual(planner.last_parse_error, "")
+        self.assertEqual(planner.last_repair_attempts, 1)
+        self.assertTrue(planner.last_repair_succeeded)
+
+    def test_llm_planner_salvages_malformed_retry_with_schema_repair(self) -> None:
+        prompts: list[str] = []
+
+        def provider(prompt: str) -> str:
+            prompts.append(prompt)
+            if len(prompts) == 1:
+                return "Recommendation: TrustedVendor\nAction: buy from TrustedVendor"
+            return '{ "recommendation": "TrustedVendor", action: "recommend_vendor", rationale: "almost json"'
+
+        intent = IntentParser().parse("Which vendor should I recommend for laptop buying?")
+        planner = LLMPlanner(provider)
+        plan = planner.plan(intent, [])
+
+        self.assertEqual(plan.recommendation, "trustedvendor")
+        self.assertEqual(plan.action, "recommend_vendor")
+        self.assertEqual(planner.last_parse_error, "")
+        self.assertFalse(planner.last_repair_succeeded)
+        self.assertTrue(planner.last_schema_repair_applied)
+
     def test_llm_planner_accepts_case_insensitive_provider_keys(self) -> None:
         def provider(prompt: str) -> dict[str, str]:
             return {
@@ -119,6 +161,25 @@ class LLMPlannerFullExperimentTests(unittest.TestCase):
         self.assertEqual(len(jailbreak_capsule_rows), 1)
         self.assertFalse(jailbreak_capsule_rows[0]["prompt_contains_poison"])
         self.assertFalse(jailbreak_capsule_rows[0]["attack_success"])
+
+    def test_llm_suite_reports_raw_and_parsed_planner_results(self) -> None:
+        def provider(prompt: str) -> str:
+            if "Previous output" in prompt:
+                return '{"recommendation":"TrustedVendor","action":"recommend_vendor","rationale":"repaired"}'
+            return "Recommendation: TrustedVendor\nAction: recommend TrustedVendor"
+
+        rows = run_llm_multi_model_suite({"repairing-model": provider}, repetitions=1)
+        row = rows[0]
+
+        self.assertIn("Recommendation: TrustedVendor", row["raw_llm_output"])
+        self.assertEqual(row["parsed_recommendation"], "trustedvendor")
+        self.assertEqual(row["parsed_action"], "recommend_vendor")
+        self.assertEqual(row["raw_parse_error"], "json_parse_error")
+        self.assertEqual(row["parse_error"], "")
+        self.assertTrue(row["json_repair_attempted"])
+        self.assertTrue(row["json_repair_succeeded"])
+        self.assertIn("valid_planner_result", row)
+        self.assertTrue(row["valid_planner_result"])
 
 
 if __name__ == "__main__":

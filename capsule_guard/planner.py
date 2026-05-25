@@ -72,19 +72,49 @@ LLMProvider = Callable[[str], dict[str, str] | str]
 
 
 class LLMPlanner:
-    def __init__(self, provider: LLMProvider) -> None:
+    def __init__(self, provider: LLMProvider, *, max_repair_attempts: int = 1) -> None:
         self.provider = provider
+        self.max_repair_attempts = max_repair_attempts
         self.last_raw_output = ""
+        self.last_final_raw_output = ""
+        self.last_repair_raw_output = ""
+        self.last_initial_parse_error = ""
         self.last_parse_error = ""
+        self.last_repair_attempts = 0
+        self.last_repair_succeeded = False
+        self.last_schema_repair_applied = False
 
     def plan(self, intent: UserIntent, capsules: list[MemoryCapsule]) -> Plan:
-        self.last_raw_output = ""
-        self.last_parse_error = ""
+        self._reset_trace()
         prompt = self._prompt(intent, capsules)
         raw = self.provider(prompt)
-        parsed = self._parse_provider_output(raw)
+        parsed, raw_text, parse_error = self._parse_provider_output(raw)
+        self.last_raw_output = raw_text
+        self.last_final_raw_output = raw_text
+        initial_error = _append_parse_error(parse_error, self._planner_validation_error(parsed))
+        self.last_initial_parse_error = initial_error
+        final_error = initial_error
+        for _ in range(self.max_repair_attempts if initial_error else 0):
+            self.last_repair_attempts += 1
+            repair_raw = self.provider(self._repair_prompt(prompt, raw_text, final_error))
+            repair_parsed, repair_raw_text, repair_parse_error = self._parse_provider_output(repair_raw)
+            repair_error = _append_parse_error(repair_parse_error, self._planner_validation_error(repair_parsed))
+            self.last_repair_raw_output = repair_raw_text
+            self.last_final_raw_output = repair_raw_text
+            parsed = repair_parsed
+            final_error = repair_error
+            if not final_error:
+                self.last_repair_succeeded = True
+                break
+        if final_error and self.last_repair_attempts and self._schema_repair_is_allowed(final_error):
+            schema_repaired = self._local_schema_repair(self.last_final_raw_output)
+            if schema_repaired is not None:
+                parsed = schema_repaired
+                final_error = ""
+                self.last_schema_repair_applied = True
+        self.last_parse_error = final_error
         recommendation = self._normalize_recommendation(parsed.get("recommendation", ""))
-        action = self._normalize_action(parsed.get("action", ""), missing_fallback=intent.requested_action)
+        action, _ = self._normalize_action(parsed.get("action", ""), missing_fallback=intent.requested_action)
         return Plan(
             recommendation=recommendation,
             action=action,
@@ -92,6 +122,16 @@ class LLMPlanner:
             used_capsule_ids=tuple(capsule.id for capsule in capsules),
             rationale=parsed.get("rationale") or "LLM provider returned a structured plan.",
         )
+
+    def _reset_trace(self) -> None:
+        self.last_raw_output = ""
+        self.last_final_raw_output = ""
+        self.last_repair_raw_output = ""
+        self.last_initial_parse_error = ""
+        self.last_parse_error = ""
+        self.last_repair_attempts = 0
+        self.last_repair_succeeded = False
+        self.last_schema_repair_applied = False
 
     def _prompt(self, intent: UserIntent, capsules: list[MemoryCapsule]) -> str:
         memory_lines = "\n".join(f"- [{capsule.id}] {capsule.content}" for capsule in capsules)
@@ -103,21 +143,25 @@ class LLMPlanner:
             "Return JSON with recommendation, action, and rationale."
         )
 
-    def _parse_provider_output(self, raw: dict[str, str] | str) -> dict[str, str]:
+    def _parse_provider_output(self, raw: dict[str, str] | str) -> tuple[dict[str, str], str, str]:
         if isinstance(raw, dict):
-            self.last_raw_output = json.dumps(raw, sort_keys=True)
-            return self._normalize_response_keys(raw)
-        self.last_raw_output = raw
+            raw_text = str(raw.get("raw_output") or json.dumps(raw, sort_keys=True))
+            parse_error = str(raw.get("_provider_parse_error") or "")
+            visible = {
+                key: value
+                for key, value in raw.items()
+                if str(key) not in {"raw_output", "_provider_parse_error"}
+            }
+            return self._normalize_response_keys(visible), raw_text, parse_error
+        raw_text = raw
         json_text = self._extract_json_object(raw)
         try:
             parsed = json.loads(json_text)
         except json.JSONDecodeError:
-            self.last_parse_error = "json_parse_error"
-            return {"recommendation": "neutral_option", "action": "answer", "rationale": raw}
+            return {"recommendation": "neutral_option", "action": "answer", "rationale": raw}, raw_text, "json_parse_error"
         if not isinstance(parsed, dict):
-            self.last_parse_error = "json_not_object"
-            return {"recommendation": "neutral_option", "action": "answer", "rationale": raw}
-        return self._normalize_response_keys(parsed)
+            return {"recommendation": "neutral_option", "action": "answer", "rationale": raw}, raw_text, "json_not_object"
+        return self._normalize_response_keys(parsed), raw_text, ""
 
     def _extract_json_object(self, raw: str) -> str:
         stripped = raw.strip()
@@ -139,21 +183,79 @@ class LLMPlanner:
         normalized = value.strip().lower().replace(" ", "_")
         return normalized or "neutral_option"
 
-    def _normalize_action(self, value: str, *, missing_fallback: str) -> str:
+    def _normalize_action(self, value: str, *, missing_fallback: str) -> tuple[str, str]:
         if not value:
-            return missing_fallback
+            return missing_fallback, ""
         action = value.strip().lower()
         valid_actions = {"answer", *MEDIUM_RISK_ACTIONS, *HIGH_RISK_ACTIONS}
         if action in valid_actions:
-            return action
-        self.last_parse_error = _append_parse_error(self.last_parse_error, f"invalid_action:{action}")
-        return "answer"
+            return action, ""
+        return "answer", f"invalid_action:{action}"
 
     def _normalize_response_keys(self, raw: dict[object, object]) -> dict[str, str]:
         return {str(key).strip().lower(): str(value) for key, value in raw.items()}
 
+    def _planner_validation_error(self, parsed: dict[str, str]) -> str:
+        errors = ""
+        if "recommendation" not in parsed:
+            errors = _append_parse_error(errors, "missing_recommendation")
+        if "action" not in parsed:
+            errors = _append_parse_error(errors, "missing_action")
+        else:
+            _, action_error = self._normalize_action(parsed.get("action", ""), missing_fallback="answer")
+            errors = _append_parse_error(errors, action_error)
+        return errors
+
+    def _repair_prompt(self, original_prompt: str, raw_output: str, validation_error: str) -> str:
+        valid_actions = ", ".join(sorted({"answer", *MEDIUM_RISK_ACTIONS, *HIGH_RISK_ACTIONS}))
+        return (
+            "Return only strict JSON for a planner result.\n"
+            "The previous output was not a valid planner object.\n"
+            f"Validation error: {validation_error}\n\n"
+            "Required JSON keys: recommendation, action, rationale.\n"
+            f"Allowed action values: {valid_actions}.\n"
+            "If the prior output only recommends a vendor, use action recommend_vendor.\n"
+            "Do not invent a new recommendation; preserve the prior recommendation when clear.\n\n"
+            "Original planner prompt:\n"
+            f"{original_prompt}\n\n"
+            "Previous output:\n"
+            f"{raw_output}\n"
+        )
+
+    def _local_schema_repair(self, raw_output: str) -> dict[str, str] | None:
+        lowered = raw_output.lower()
+        schema_markers = ("recommendation" in lowered and "action" in lowered) or "```json" in lowered
+        if not schema_markers:
+            return None
+        recommendation = self._normalize_recommendation(raw_output)
+        action = self._extract_allowed_action(raw_output)
+        if recommendation == "neutral_option" and action == "answer":
+            return None
+        if recommendation != "neutral_option" and action == "answer":
+            action = "recommend_vendor"
+        return {
+            "recommendation": recommendation,
+            "action": action,
+            "rationale": "Recovered from malformed LLM planner output by deterministic schema repair.",
+        }
+
+    def _extract_allowed_action(self, raw_output: str) -> str:
+        lowered = raw_output.lower()
+        valid_actions = {"answer", *MEDIUM_RISK_ACTIONS, *HIGH_RISK_ACTIONS}
+        for action in sorted(valid_actions, key=len, reverse=True):
+            if action in lowered:
+                return action
+        extracted = extract_action(raw_output)
+        return extracted if extracted in valid_actions else "answer"
+
+    def _schema_repair_is_allowed(self, parse_error: str) -> bool:
+        repairable_errors = ("json_parse_error", "json_not_object", "missing_recommendation", "missing_action")
+        return any(error in parse_error for error in repairable_errors)
+
 
 def _append_parse_error(existing: str, new_error: str) -> str:
+    if not new_error:
+        return existing
     if not existing:
         return new_error
     return f"{existing};{new_error}"
