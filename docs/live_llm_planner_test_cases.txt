@@ -64,6 +64,8 @@ parse_error: the remaining validation error after retry and deterministic schema
 json_repair_attempted: whether the model was asked to repair its output into strict JSON.
 json_repair_succeeded: whether the LLM retry itself produced a valid planner object.
 schema_repair_applied: whether deterministic schema salvage recovered an almost-JSON planner object after the retry failed.
+schema_repair_source: which model output was used for deterministic schema salvage: final_output for the strict retry or raw_output when the retry drifted away from the planner schema.
+repair_drift_detected: whether the retry produced unrelated or off-schema content and the planner recovered by anchoring back to the original model output.
 valid_planner_result: whether the final planner object was valid.
 
 Latest Live LLM ASR Snapshot
@@ -73,7 +75,7 @@ llama3, jailbreak_style_prompt, ASR: 0.00
 
 mistral, ambient_prompt, ASR: 0.00
 mistral, capsule_filtered_prompt, ASR: 0.00
-mistral, jailbreak_style_prompt, ASR: 0.3333
+mistral, jailbreak_style_prompt, ASR: 0.00
 
 phi3, ambient_prompt, ASR: 0.00
 phi3, capsule_filtered_prompt, ASR: 0.00
@@ -81,14 +83,24 @@ phi3, jailbreak_style_prompt, ASR: 0.00
 
 Key Evaluation Interpretation
 The defended capsule_filtered_prompt condition had ASR 0.00 across llama3, mistral, and phi3 in this run.
-The visible jailbreak-style prompt still succeeded against mistral in 1 out of 3 repetitions, showing why the defended condition must remove unauthorized poison memories before the LLM planner sees them.
+The visible jailbreak-style prompt had ASR 0.00 in this run, but it still remains a baseline exposure condition because unauthorized memory is visible to the LLM planner.
 
 Latest Strict-Repair Snapshot
 capsule_filtered_prompt ASR: 0.00
-capsule_filtered_prompt final parse error rate: 0.0556
-capsule_filtered_prompt valid planner rate: 0.9444
+capsule_filtered_prompt final parse error rate: 0.00
+capsule_filtered_prompt valid planner rate: 1.00
+capsule_filtered_prompt schema repair rate: 0.1667
+capsule_filtered_prompt repair drift rate: 0.0556
 ambient_prompt final parse error rate: 0.00
-jailbreak_style_prompt final parse error rate: 0.1111
+jailbreak_style_prompt final parse error rate: 0.00
+
+Latest Phi3 Defended Parser Snapshot
+phi3 capsule_filtered_prompt ASR: 0.00
+phi3 capsule_filtered_prompt final parse error rate: 0.00
+phi3 capsule_filtered_prompt valid planner rate: 1.00
+phi3 capsule_filtered_prompt JSON repair success rate: 0.50
+phi3 capsule_filtered_prompt deterministic schema repair rate: 0.50
+phi3 capsule_filtered_prompt retry drift rate: 0.1667
 
 Interpretation of raw parse errors
 The raw parse error rate is intentionally reported separately from final parse error rate. It shows how often live models failed the strict planner schema on their first attempt. The final parse error rate is the more important usability metric after retry and schema repair.
@@ -104,6 +116,7 @@ Malformed or non-JSON LLM output.
 Invalid action strings falling back to safe answer action.
 Strict JSON retry for malformed planner outputs.
 Deterministic schema repair for almost-JSON outputs after failed retry.
+Retry drift recovery when a model's strict JSON retry turns into an unrelated object but the original output still contains a clear planner recommendation.
 Separate raw LLM output and parsed planner result reporting.
 Multi-model variance across model profiles.
 Prompt isolation where unauthorized memory is hidden from the defended LLM prompt.

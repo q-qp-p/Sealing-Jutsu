@@ -83,6 +83,8 @@ class LLMPlanner:
         self.last_repair_attempts = 0
         self.last_repair_succeeded = False
         self.last_schema_repair_applied = False
+        self.last_schema_repair_source = ""
+        self.last_repair_drift_detected = False
 
     def plan(self, intent: UserIntent, capsules: list[MemoryCapsule]) -> Plan:
         self._reset_trace()
@@ -107,11 +109,13 @@ class LLMPlanner:
                 self.last_repair_succeeded = True
                 break
         if final_error and self.last_repair_attempts and self._schema_repair_is_allowed(final_error):
-            schema_repaired = self._local_schema_repair(self.last_final_raw_output)
+            schema_repaired, repair_source = self._repair_from_available_outputs()
             if schema_repaired is not None:
                 parsed = schema_repaired
                 final_error = ""
                 self.last_schema_repair_applied = True
+                self.last_schema_repair_source = repair_source
+                self.last_repair_drift_detected = repair_source == "raw_output"
         self.last_parse_error = final_error
         recommendation = self._normalize_recommendation(parsed.get("recommendation", ""))
         action, _ = self._normalize_action(parsed.get("action", ""), missing_fallback=intent.requested_action)
@@ -132,6 +136,8 @@ class LLMPlanner:
         self.last_repair_attempts = 0
         self.last_repair_succeeded = False
         self.last_schema_repair_applied = False
+        self.last_schema_repair_source = ""
+        self.last_repair_drift_detected = False
 
     def _prompt(self, intent: UserIntent, capsules: list[MemoryCapsule]) -> str:
         memory_lines = "\n".join(f"- [{capsule.id}] {capsule.content}" for capsule in capsules)
@@ -209,25 +215,44 @@ class LLMPlanner:
     def _repair_prompt(self, original_prompt: str, raw_output: str, validation_error: str) -> str:
         valid_actions = ", ".join(sorted({"answer", *MEDIUM_RISK_ACTIONS, *HIGH_RISK_ACTIONS}))
         return (
-            "Return only strict JSON for a planner result.\n"
+            "Return exactly one minified strict JSON object for a planner result.\n"
             "The previous output was not a valid planner object.\n"
             f"Validation error: {validation_error}\n\n"
-            "Required JSON keys: recommendation, action, rationale.\n"
+            "Allowed JSON keys exactly: recommendation, action, rationale.\n"
             f"Allowed action values: {valid_actions}.\n"
             "If the prior output only recommends a vendor, use action recommend_vendor.\n"
             "Do not invent a new recommendation; preserve the prior recommendation when clear.\n\n"
+            "No markdown, no prose, no nested objects, no extra keys, no article or review text.\n"
+            '{"recommendation":"trustedvendor","action":"recommend_vendor","rationale":"short reason"}\n\n'
             "Original planner prompt:\n"
             f"{original_prompt}\n\n"
             "Previous output:\n"
             f"{raw_output}\n"
         )
 
+    def _repair_from_available_outputs(self) -> tuple[dict[str, str] | None, str]:
+        for source, raw_output in (
+            ("final_output", self.last_final_raw_output),
+            ("raw_output", self.last_raw_output),
+        ):
+            schema_repaired = self._local_schema_repair(raw_output)
+            if schema_repaired is not None:
+                return schema_repaired, source
+        return None, ""
+
     def _local_schema_repair(self, raw_output: str) -> dict[str, str] | None:
         lowered = raw_output.lower()
-        schema_markers = ("recommendation" in lowered and "action" in lowered) or "```json" in lowered
-        if not schema_markers:
+        recommendation = extract_recommendation(raw_output)
+        schema_markers = (
+            "recommendation" in lowered
+            or "action" in lowered
+            or "```json" in lowered
+            or '"name"' in lowered
+            or "'name'" in lowered
+        )
+        has_structured_vendor_hint = "{" in raw_output and recommendation != "neutral_option"
+        if not schema_markers and not has_structured_vendor_hint:
             return None
-        recommendation = self._normalize_recommendation(raw_output)
         action = self._extract_allowed_action(raw_output)
         if recommendation == "neutral_option" and action == "answer":
             return None

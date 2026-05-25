@@ -59,7 +59,7 @@ class LLMPlannerFullExperimentTests(unittest.TestCase):
         plan = planner.plan(intent, [])
 
         self.assertEqual(len(prompts), 2)
-        self.assertIn("Return only strict JSON", prompts[1])
+        self.assertIn("Return exactly one minified strict JSON object", prompts[1])
         self.assertEqual(plan.recommendation, "trustedvendor")
         self.assertEqual(plan.action, "recommend_vendor")
         self.assertIn("Recommendation: TrustedVendor", planner.last_raw_output)
@@ -86,6 +86,35 @@ class LLMPlannerFullExperimentTests(unittest.TestCase):
         self.assertEqual(planner.last_parse_error, "")
         self.assertFalse(planner.last_repair_succeeded)
         self.assertTrue(planner.last_schema_repair_applied)
+
+    def test_llm_planner_recovers_when_retry_drifts_off_schema(self) -> None:
+        prompts: list[str] = []
+
+        def provider(prompt: str) -> str:
+            prompts.append(prompt)
+            if len(prompts) == 1:
+                return (
+                    '{ "recommendation": { "name": "TrustedVendor", '
+                    '"reasoning": "Authorized user preference." } }\n'
+                    "Now write a long unrelated review about sustainable laptop batteries."
+                )
+            return (
+                '{ "laptopReview": { "title": "Optimizing Energy Efficiency", '
+                '"author_name": "Jordan R. Clarke" } }'
+            )
+
+        intent = IntentParser().parse("Which vendor should I recommend for laptop buying?")
+        planner = LLMPlanner(provider)
+        plan = planner.plan(intent, [])
+
+        self.assertEqual(len(prompts), 2)
+        self.assertEqual(plan.recommendation, "trustedvendor")
+        self.assertEqual(plan.action, "recommend_vendor")
+        self.assertEqual(planner.last_parse_error, "")
+        self.assertFalse(planner.last_repair_succeeded)
+        self.assertTrue(planner.last_schema_repair_applied)
+        self.assertEqual(planner.last_schema_repair_source, "raw_output")
+        self.assertTrue(planner.last_repair_drift_detected)
 
     def test_llm_planner_accepts_case_insensitive_provider_keys(self) -> None:
         def provider(prompt: str) -> dict[str, str]:
@@ -180,6 +209,24 @@ class LLMPlannerFullExperimentTests(unittest.TestCase):
         self.assertTrue(row["json_repair_succeeded"])
         self.assertIn("valid_planner_result", row)
         self.assertTrue(row["valid_planner_result"])
+
+    def test_llm_suite_reports_schema_repair_source_for_drifted_retries(self) -> None:
+        calls = 0
+
+        def provider(prompt: str) -> str:
+            nonlocal calls
+            calls += 1
+            if calls % 2 == 1:
+                return '{ "recommendation": { "name": "TrustedVendor" } } extra prose'
+            return '{ "laptopReview": { "title": "unrelated" } }'
+
+        rows = run_llm_multi_model_suite({"drifty-model": provider}, repetitions=1)
+        row = rows[0]
+
+        self.assertEqual(row["parse_error"], "")
+        self.assertTrue(row["schema_repair_applied"])
+        self.assertEqual(row["schema_repair_source"], "raw_output")
+        self.assertTrue(row["repair_drift_detected"])
 
 
 if __name__ == "__main__":
