@@ -222,7 +222,3 @@ This is a research prototype. The current evidence is strong inside the simulato
 4. Source labels are modeled as metadata; real deployments need signed, append-only provenance.
 5. Policy thresholds are still research parameters and need calibration on real workloads.
 6. Real browser, email, database, and account side effects should be tested in isolated sandboxes before deployment claims.
-
-## Paper
-
-See [`paper/CAPSULEGUARD_CONFERENCE_DRAFT.md`](paper/CAPSULEGUARD_CONFERENCE_DRAFT.md) for the paper-style write-up.
