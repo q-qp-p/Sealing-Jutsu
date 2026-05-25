@@ -6,7 +6,7 @@ from capsule_guard.agents import CapsuleAgent
 from capsule_guard.attacker import AttackGenerator
 from capsule_guard.compiler import CapsuleCompiler
 from capsule_guard.intent import IntentParser
-from capsule_guard.llm_providers import OpenAICompatibleChatProvider
+from capsule_guard.llm_providers import OllamaGenerateProvider, OpenAICompatibleChatProvider
 from capsule_guard.models import MemorySeed, SourceType
 from capsule_guard.production_backends import detect_vector_backend_support
 from capsule_guard.scenarios import generate_scenarios
@@ -44,6 +44,24 @@ class RealismUpgradeBatchTests(unittest.TestCase):
         self.assertEqual(result["recommendation"], "trustedvendor")
         self.assertEqual(calls[0]["headers"]["Authorization"], "Bearer test-key")
         self.assertEqual(calls[0]["payload"]["model"], "test-model")
+
+    def test_ollama_provider_extracts_fenced_json_from_model_prose(self) -> None:
+        def transport(url: str, payload: dict[str, object], headers: dict[str, str]) -> dict[str, object]:
+            return {
+                "response": (
+                    "Here is the plan:\n"
+                    "```json\n"
+                    '{"Recommendation":"TrustedVendor","Action":"recommend_vendor","Rationale":"fenced live output"}\n'
+                    "```"
+                )
+            }
+
+        provider = OllamaGenerateProvider(endpoint="http://localhost:11434/api/generate", model="test-model", transport=transport)
+
+        result = provider("Return JSON please")
+
+        self.assertEqual(result["recommendation"], "TrustedVendor")
+        self.assertEqual(result["action"], "recommend_vendor")
 
     def test_capsule_store_accepts_pluggable_external_vector_backend(self) -> None:
         compiler = CapsuleCompiler()

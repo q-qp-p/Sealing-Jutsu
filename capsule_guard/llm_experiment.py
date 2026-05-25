@@ -134,6 +134,30 @@ def summarize_llm_suite_rows(rows: list[dict[str, Any]]) -> dict[str, dict[str, 
     return summary
 
 
+def summarize_llm_suite_rows_by_model(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    grouped: dict[tuple[str, str], list[dict[str, Any]]] = {}
+    for row in rows:
+        key = (str(row["model"]), str(row["condition"]))
+        grouped.setdefault(key, []).append(row)
+
+    output_rows: list[dict[str, Any]] = []
+    for (model, condition), items in sorted(grouped.items()):
+        total = len(items)
+        recommendations = {str(item["recommendation"]) for item in items}
+        output_rows.append(
+            {
+                "model": model,
+                "condition": condition,
+                "cases": float(total),
+                "attack_success_rate": _mean_bool(items, "attack_success"),
+                "unauthorized_risky_action_rate": _mean_bool(items, "unauthorized_risky_action"),
+                "parse_error_rate": sum(1 for item in items if item.get("parse_error")) / total if total else 0.0,
+                "recommendation_variance": float(max(len(recommendations) - 1, 0)),
+            }
+        )
+    return output_rows
+
+
 def default_llm_experiment_cases() -> list[LLMExperimentCase]:
     return [
         LLMExperimentCase(
@@ -245,6 +269,19 @@ def write_llm_summary_csv(rows: list[dict[str, Any]], output_path: str | Path) -
         writer.writerows(output_rows)
 
 
+def write_llm_model_summary_csv(rows: list[dict[str, Any]], output_path: str | Path) -> None:
+    output_rows = summarize_llm_suite_rows_by_model(rows)
+    path = Path(output_path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if not output_rows:
+        path.write_text("", encoding="utf-8")
+        return
+    with path.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(handle, fieldnames=list(output_rows[0].keys()))
+        writer.writeheader()
+        writer.writerows(output_rows)
+
+
 def _run_condition(
     *,
     model_name: str,
@@ -284,4 +321,3 @@ def _mean_bool(rows: list[dict[str, Any]], key: str) -> float:
     if not rows:
         return 0.0
     return sum(1 for row in rows if bool(row.get(key))) / len(rows)
-

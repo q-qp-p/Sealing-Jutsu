@@ -9,7 +9,9 @@ from urllib import request
 from capsule_guard.llm_experiment import (
     local_profile_provider,
     run_llm_multi_model_suite,
+    summarize_llm_suite_rows_by_model,
     summarize_llm_suite_rows,
+    write_llm_model_summary_csv,
     write_llm_suite_csv,
     write_llm_summary_csv,
 )
@@ -33,6 +35,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--repetitions", type=int, default=1)
     parser.add_argument("--output-csv", type=Path, default=Path("results") / "capsule_llm_planner_suite.csv")
     parser.add_argument("--summary-csv", type=Path, default=Path("results") / "capsule_llm_planner_summary.csv")
+    parser.add_argument(
+        "--model-summary-csv",
+        type=Path,
+        default=Path("results") / "capsule_llm_planner_model_summary.csv",
+    )
     return parser
 
 
@@ -57,14 +64,19 @@ def main() -> None:
     rows = run_llm_multi_model_suite(providers, repetitions=args.repetitions)
     write_llm_suite_csv(rows, args.output_csv)
     write_llm_summary_csv(rows, args.summary_csv)
+    write_llm_model_summary_csv(rows, args.model_summary_csv)
 
     for row in rows:
         print(row)
     print("\nSummary:")
     for condition, metrics in sorted(summarize_llm_suite_rows(rows).items()):
         print(condition, metrics)
+    print("\nPer-model summary:")
+    for row in summarize_llm_suite_rows_by_model(rows):
+        print(row)
     print(f"Wrote LLM planner suite CSV: {args.output_csv}")
     print(f"Wrote LLM planner summary CSV: {args.summary_csv}")
+    print(f"Wrote LLM planner model summary CSV: {args.model_summary_csv}")
 
 
 def _provider_for_model(args: argparse.Namespace, model_name: str):

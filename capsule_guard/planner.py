@@ -106,7 +106,7 @@ class LLMPlanner:
     def _parse_provider_output(self, raw: dict[str, str] | str) -> dict[str, str]:
         if isinstance(raw, dict):
             self.last_raw_output = json.dumps(raw, sort_keys=True)
-            return {str(key): str(value) for key, value in raw.items()}
+            return self._normalize_response_keys(raw)
         self.last_raw_output = raw
         json_text = self._extract_json_object(raw)
         try:
@@ -117,7 +117,7 @@ class LLMPlanner:
         if not isinstance(parsed, dict):
             self.last_parse_error = "json_not_object"
             return {"recommendation": "neutral_option", "action": "answer", "rationale": raw}
-        return {str(key): str(value) for key, value in parsed.items()}
+        return self._normalize_response_keys(parsed)
 
     def _extract_json_object(self, raw: str) -> str:
         stripped = raw.strip()
@@ -148,6 +148,9 @@ class LLMPlanner:
             return action
         self.last_parse_error = _append_parse_error(self.last_parse_error, f"invalid_action:{action}")
         return "answer"
+
+    def _normalize_response_keys(self, raw: dict[object, object]) -> dict[str, str]:
+        return {str(key).strip().lower(): str(value) for key, value in raw.items()}
 
 
 def _append_parse_error(existing: str, new_error: str) -> str:

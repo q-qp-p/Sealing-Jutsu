@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from typing import Any, Callable
 from urllib import request
 
@@ -91,8 +92,9 @@ def _extract_chat_content(response: dict[str, object]) -> str:
 
 
 def _parse_json_or_rationale(content: str) -> dict[str, str]:
+    json_text = _extract_json_object(content)
     try:
-        parsed: Any = json.loads(content)
+        parsed: Any = json.loads(json_text)
     except json.JSONDecodeError:
         return {
             "recommendation": "neutral_option",
@@ -105,4 +107,20 @@ def _parse_json_or_rationale(content: str) -> dict[str, str]:
             "action": "answer",
             "rationale": content,
         }
-    return {str(key): str(value) for key, value in parsed.items()}
+    return _normalize_response_keys(parsed)
+
+
+def _extract_json_object(content: str) -> str:
+    stripped = content.strip()
+    fence = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", stripped, flags=re.DOTALL | re.IGNORECASE)
+    if fence:
+        return fence.group(1)
+    start = stripped.find("{")
+    end = stripped.rfind("}")
+    if start >= 0 and end > start:
+        return stripped[start : end + 1]
+    return stripped
+
+
+def _normalize_response_keys(parsed: dict[Any, Any]) -> dict[str, str]:
+    return {str(key).strip().lower(): str(value) for key, value in parsed.items()}
