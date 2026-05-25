@@ -29,10 +29,14 @@ class OpenAICompatibleChatProvider:
         payload: dict[str, object] = {
             "model": self.model,
             "temperature": self.temperature,
+            "response_format": {"type": "json_object"},
             "messages": [
                 {
                     "role": "system",
-                    "content": "Return only JSON with recommendation, action, and rationale.",
+                    "content": (
+                        "Return exactly one strict JSON object with string keys "
+                        "recommendation, action, and rationale. No prose."
+                    ),
                 },
                 {"role": "user", "content": prompt},
             ],
@@ -64,6 +68,8 @@ class OllamaGenerateProvider:
                 "model": self.model,
                 "prompt": prompt,
                 "stream": False,
+                "format": "json",
+                "options": {"temperature": 0},
             },
             {"Content-Type": "application/json"},
         )
