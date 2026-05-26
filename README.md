@@ -10,7 +10,7 @@
 
 <p align="center">
   <a href="#quick-start"><img alt="Python" src="https://img.shields.io/badge/python-3.10%2B-111827"></a>
-  <a href="#testing"><img alt="Tests" src="https://img.shields.io/badge/tests-112%20passing-1f883d"></a>
+  <a href="#testing"><img alt="Tests" src="https://img.shields.io/badge/tests-120%20passing-1f883d"></a>
   <a href="#current-evidence"><img alt="Held-out ASR" src="https://img.shields.io/badge/held--out%20ASR-0.00%25-0f766e"></a>
   <a href="#honest-limits"><img alt="Scope" src="https://img.shields.io/badge/scope-research%20prototype-7c2d12"></a>
 </p>
@@ -221,6 +221,28 @@ This runs 36 workflow-corpus cases across 3 live models and 2 planner conditions
 
 The live LLM CSV separates `planner_attack_success` from `attack_success`. `planner_attack_success` means the LLM was tempted into the attacker target before authorization. `attack_success` means the poisoned plan survived the final plan/action gates and would be accepted.
 
+Run the complete workflow-corpus benchmark and the live LLM planner benchmark together:
+
+```bash
+python run_capsuleguard.py \
+  --attack-mode workflow_corpus \
+  --workflow-corpus data/workflow_corpus_splits/test.jsonl \
+  --trials 5 \
+  --repetitions 4 \
+  --noise-memories 4 \
+  --seed 2026 \
+  --include-llm-planner \
+  --llm-provider ollama \
+  --llm-models llama3,mistral,phi3 \
+  --llm-case-source workflow-corpus \
+  --llm-workflow-corpus data/workflow_corpus_splits/test.jsonl \
+  --llm-case-limit 36 \
+  --llm-case-seed 2026 \
+  --llm-repetitions 1
+```
+
+Use this when you want one command to produce both the symbolic high-volume capsule benchmark and the live LLM planner evidence.
+
 ## Testing
 
 ```bash
@@ -230,7 +252,7 @@ python -m unittest discover -s tests
 Expected current result:
 
 ```text
-Ran 112 tests
+Ran 120 tests
 OK
 ```
 

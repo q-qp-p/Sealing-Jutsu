@@ -7,6 +7,7 @@ from urllib import request
 
 
 Transport = Callable[[str, dict[str, object], dict[str, str]], dict[str, object]]
+DEFAULT_HTTP_TIMEOUT_SECONDS = 300.0
 
 
 class OpenAICompatibleChatProvider:
@@ -17,13 +18,14 @@ class OpenAICompatibleChatProvider:
         model: str,
         api_key: str = "",
         temperature: float = 0.0,
+        timeout_seconds: float = DEFAULT_HTTP_TIMEOUT_SECONDS,
         transport: Transport | None = None,
     ) -> None:
         self.endpoint = endpoint
         self.model = model
         self.api_key = api_key
         self.temperature = temperature
-        self.transport = transport or _http_transport
+        self.transport = transport or http_transport_with_timeout(timeout_seconds)
 
     def __call__(self, prompt: str) -> dict[str, str]:
         payload: dict[str, object] = {
@@ -55,11 +57,12 @@ class OllamaGenerateProvider:
         *,
         endpoint: str = "http://localhost:11434/api/generate",
         model: str = "llama3.1",
+        timeout_seconds: float = DEFAULT_HTTP_TIMEOUT_SECONDS,
         transport: Transport | None = None,
     ) -> None:
         self.endpoint = endpoint
         self.model = model
-        self.transport = transport or _http_transport
+        self.transport = transport or http_transport_with_timeout(timeout_seconds)
 
     def __call__(self, prompt: str) -> dict[str, str]:
         response = self.transport(
@@ -77,11 +80,14 @@ class OllamaGenerateProvider:
         return _parse_json_or_rationale(content)
 
 
-def _http_transport(url: str, payload: dict[str, object], headers: dict[str, str]) -> dict[str, object]:
-    encoded = json.dumps(payload).encode("utf-8")
-    call = request.Request(url, data=encoded, headers=headers, method="POST")
-    with request.urlopen(call, timeout=90) as response:
-        return json.loads(response.read().decode("utf-8"))
+def http_transport_with_timeout(timeout_seconds: float = DEFAULT_HTTP_TIMEOUT_SECONDS) -> Transport:
+    def transport(url: str, payload: dict[str, object], headers: dict[str, str]) -> dict[str, object]:
+        encoded = json.dumps(payload).encode("utf-8")
+        call = request.Request(url, data=encoded, headers=headers, method="POST")
+        with request.urlopen(call, timeout=timeout_seconds) as response:
+            return json.loads(response.read().decode("utf-8"))
+
+    return transport
 
 
 def _extract_chat_content(response: dict[str, object]) -> str:

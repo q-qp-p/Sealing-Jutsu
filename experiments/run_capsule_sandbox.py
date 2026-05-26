@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import os
 from pathlib import Path
 import sys
 from typing import TextIO
@@ -9,6 +10,18 @@ from typing import TextIO
 from capsule_guard.charts import write_bar_chart
 from capsule_guard.evaluation import default_agent_factories, evaluate, write_attack_breakdown_csv, write_traces_jsonl
 from capsule_guard.gap_closure import read_csv_rows, write_gap_closure_csv
+from capsule_guard.llm_experiment import (
+    default_llm_experiment_cases,
+    load_llm_cases_from_workflow_corpus,
+    local_profile_provider,
+    run_llm_multi_model_suite,
+    summarize_llm_suite_rows,
+    summarize_llm_suite_rows_by_model,
+    write_llm_model_summary_csv,
+    write_llm_suite_csv,
+    write_llm_summary_csv,
+)
+from capsule_guard.llm_providers import OllamaGenerateProvider
 from capsule_guard.metrics import Metrics, table
 from capsule_guard.scenarios import generate_scenarios
 from capsule_guard.statistics import aggregate_metric_rows, write_summary_csv
@@ -99,6 +112,67 @@ def build_parser() -> argparse.ArgumentParser:
         help="JSONL workflow corpus used when --attack-mode workflow_corpus.",
     )
     parser.add_argument("--no-ablations", action="store_true", help="Skip ablation agents.")
+    parser.add_argument(
+        "--include-llm-planner",
+        action="store_true",
+        help="Also run the LLM planner benchmark after the capsule sandbox benchmark.",
+    )
+    parser.add_argument("--llm-provider", choices=("local", "ollama"), default="local")
+    parser.add_argument(
+        "--llm-model",
+        default=os.environ.get("CAPSULE_LLM_MODEL", ""),
+        help="Single LLM model/profile used when --llm-models is not set.",
+    )
+    parser.add_argument(
+        "--llm-models",
+        default="",
+        help=(
+            "Comma-separated LLM model/profile list. For --llm-provider ollama, use llama3,mistral,phi3 "
+            "for the medium live benchmark."
+        ),
+    )
+    parser.add_argument("--llm-endpoint", default=os.environ.get("CAPSULE_LLM_ENDPOINT", ""))
+    parser.add_argument(
+        "--llm-timeout-seconds",
+        type=float,
+        default=300.0,
+        help="HTTP timeout per live LLM request. Increase this when Ollama is loading models slowly.",
+    )
+    parser.add_argument("--llm-repetitions", type=int, default=1)
+    parser.add_argument(
+        "--llm-case-source",
+        choices=("default", "workflow-corpus"),
+        default="workflow-corpus",
+        help="Use hard-coded LLM cases or the workflow-corpus test split.",
+    )
+    parser.add_argument(
+        "--llm-workflow-corpus",
+        type=Path,
+        default=Path("data") / "workflow_corpus_splits" / "test.jsonl",
+        help="JSONL corpus used when --llm-case-source workflow-corpus.",
+    )
+    parser.add_argument(
+        "--llm-case-limit",
+        type=int,
+        default=36,
+        help="Maximum workflow-corpus LLM cases to sample. Use 0 for all available cases.",
+    )
+    parser.add_argument("--llm-case-seed", type=int, default=2026)
+    parser.add_argument(
+        "--llm-output-csv",
+        type=Path,
+        default=Path("results") / "medium_live_llm_planner_suite.csv",
+    )
+    parser.add_argument(
+        "--llm-summary-csv",
+        type=Path,
+        default=Path("results") / "medium_live_llm_planner_summary.csv",
+    )
+    parser.add_argument(
+        "--llm-model-summary-csv",
+        type=Path,
+        default=Path("results") / "medium_live_llm_planner_model_summary.csv",
+    )
     return parser
 
 
@@ -172,6 +246,85 @@ def main() -> None:
     print(f"Wrote gap closure CSV: {args.gap_closure_csv}")
     print(f"Wrote tool trace CSV: {args.tool_trace_csv}")
     print(f"Wrote charts directory: {args.charts_dir}")
+    if args.include_llm_planner:
+        run_llm_planner_benchmark(args)
+
+
+def run_llm_planner_benchmark(args: argparse.Namespace) -> list[dict[str, object]]:
+    providers = _llm_providers(args)
+    cases = _llm_cases(args)
+    rows = run_llm_multi_model_suite(
+        providers,
+        repetitions=args.llm_repetitions,
+        cases=cases,
+    )
+    write_llm_suite_csv(rows, args.llm_output_csv)
+    write_llm_summary_csv(rows, args.llm_summary_csv)
+    write_llm_model_summary_csv(rows, args.llm_model_summary_csv)
+
+    print("\nLLM planner benchmark:")
+    print(f"Provider: {args.llm_provider}")
+    print(f"Models: {', '.join(providers)}")
+    print(f"Case source: {args.llm_case_source}")
+    print(f"Cases: {len(cases)}")
+    print(f"Repetitions: {args.llm_repetitions}")
+    print(f"Rows: {len(rows)}")
+    print("Summary:")
+    for condition, metrics in sorted(summarize_llm_suite_rows(rows).items()):
+        print(condition, metrics)
+    print("Per-model summary:")
+    for row in summarize_llm_suite_rows_by_model(rows):
+        print(row)
+    print(f"Wrote LLM planner suite CSV: {args.llm_output_csv}")
+    print(f"Wrote LLM planner summary CSV: {args.llm_summary_csv}")
+    print(f"Wrote LLM planner model summary CSV: {args.llm_model_summary_csv}")
+    return rows
+
+
+def _llm_providers(args: argparse.Namespace):
+    model_names = _llm_model_names(args)
+    if args.llm_provider == "local":
+        return {
+            f"local-{profile}": local_profile_provider(profile)
+            for profile in model_names
+        }
+    if args.llm_provider == "ollama":
+        endpoint = args.llm_endpoint or "http://localhost:11434/api/generate"
+        return {
+            model_name: OllamaGenerateProvider(
+                endpoint=endpoint,
+                model=model_name,
+                timeout_seconds=args.llm_timeout_seconds,
+            )
+            for model_name in model_names
+        }
+    raise ValueError(f"Unsupported LLM provider: {args.llm_provider}")
+
+
+def _llm_model_names(args: argparse.Namespace) -> list[str]:
+    raw = args.llm_models or args.llm_model
+    if not raw:
+        raw = (
+            "poison_follower,strict_safe,malformed,jailbreak_prone"
+            if args.llm_provider == "local"
+            else "llama3,mistral,phi3"
+        )
+    names = [item.strip() for item in raw.split(",") if item.strip()]
+    if not names:
+        raise ValueError("At least one LLM model/profile is required")
+    return names
+
+
+def _llm_cases(args: argparse.Namespace):
+    if args.llm_case_limit < 0:
+        raise ValueError("--llm-case-limit must be non-negative")
+    if args.llm_case_source == "workflow-corpus":
+        return load_llm_cases_from_workflow_corpus(
+            args.llm_workflow_corpus,
+            limit=args.llm_case_limit or None,
+            seed=args.llm_case_seed,
+        )
+    return default_llm_experiment_cases()
 
 
 def _write_rows_csv(rows: list[dict[str, object]], output_path: Path) -> None:

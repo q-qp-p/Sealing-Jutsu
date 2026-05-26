@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import unittest
+from unittest.mock import patch
 
 from capsule_guard.agents import CapsuleAgent
 from capsule_guard.attacker import AttackGenerator
 from capsule_guard.compiler import CapsuleCompiler
 from capsule_guard.intent import IntentParser
+from capsule_guard import llm_providers
 from capsule_guard.llm_providers import OllamaGenerateProvider, OpenAICompatibleChatProvider
 from capsule_guard.models import MemorySeed, SourceType
 from capsule_guard.production_backends import detect_vector_backend_support
@@ -82,6 +84,30 @@ class RealismUpgradeBatchTests(unittest.TestCase):
         self.assertEqual(result["recommendation"], "neutral_option")
         self.assertEqual(result["_provider_parse_error"], "json_parse_error")
         self.assertIn("Recommendation: VendorX", result["raw_output"])
+
+    def test_http_transport_uses_configurable_timeout(self) -> None:
+        seen: dict[str, float] = {}
+
+        class FakeResponse:
+            def __enter__(self):
+                return self
+
+            def __exit__(self, exc_type, exc, traceback) -> None:
+                return None
+
+            def read(self) -> bytes:
+                return b'{"response":"{}"}'
+
+        def fake_urlopen(call, timeout: float):
+            seen["timeout"] = timeout
+            return FakeResponse()
+
+        with patch.object(llm_providers.request, "urlopen", fake_urlopen):
+            transport = llm_providers.http_transport_with_timeout(240)
+            result = transport("http://example.test/generate", {}, {})
+
+        self.assertEqual(seen["timeout"], 240)
+        self.assertEqual(result, {"response": "{}"})
 
     def test_capsule_store_accepts_pluggable_external_vector_backend(self) -> None:
         compiler = CapsuleCompiler()

@@ -3,7 +3,7 @@
 Project folder:
 
 ```powershell
-cd C:\Users\User\Desktop\Agent-Poisoning-Research-FINAL
+cd C:\Users\User\Music\Agent-Poisoning-Research-FINAL
 ```
 
 ## 1. Run Unit Tests
@@ -15,7 +15,7 @@ python -m unittest discover -s tests
 Expected current result:
 
 ```text
-Ran 96 tests
+Ran 120 tests
 OK
 ```
 
@@ -127,7 +127,26 @@ python run_capsuleguard.py --attack-mode attacker_generated --trials 3 --repetit
 python run_capsuleguard.py --attack-mode utility --trials 5 --repetitions 12 --noise-memories 12
 ```
 
-## 8. Result Files
+## 8. Complete Benchmark With Live LLM Planner
+
+Use this command when you want the symbolic workflow-corpus benchmark and the live LLM planner benchmark from one run:
+
+```powershell
+python run_capsuleguard.py --attack-mode workflow_corpus --workflow-corpus data\workflow_corpus_splits\test.jsonl --trials 5 --repetitions 4 --noise-memories 4 --seed 2026 --summary-csv results\complete_workflow_corpus_summary.csv --trace-jsonl results\complete_workflow_corpus_traces.jsonl --breakdown-csv results\complete_workflow_corpus_breakdown.csv --gap-closure-csv results\complete_workflow_corpus_gap_closure.csv --tool-trace-csv results\complete_workflow_corpus_tool_traces.csv --charts-dir results\complete_workflow_corpus_charts --include-llm-planner --llm-provider ollama --llm-models llama3,mistral,phi3 --llm-case-source workflow-corpus --llm-workflow-corpus data\workflow_corpus_splits\test.jsonl --llm-case-limit 36 --llm-case-seed 2026 --llm-repetitions 1 --llm-output-csv results\complete_medium_live_llm_planner_suite.csv --llm-summary-csv results\complete_medium_live_llm_planner_summary.csv --llm-model-summary-csv results\complete_medium_live_llm_planner_model_summary.csv
+```
+
+The LLM planner section tests whether real models such as `llama3`, `mistral`, and `phi3` are tempted by poisoned memory, then reports whether the final capsule authorization gates allow or block the poisoned plan.
+
+Important LLM fields:
+
+```text
+planner_attack_success = the LLM chose the attacker target before authorization
+attack_success = the poisoned LLM plan survived final authorization
+raw_parse_error_rate = first model output failed planner schema
+parse_error_rate = final planner parse failed after repair
+```
+
+## 9. Result Files
 
 Most important current outputs:
 
@@ -140,9 +159,13 @@ results\adaptive_loop_summary.csv
 results\adaptive_loop_breakdown.csv
 results\advanced_attack_suite_summary.csv
 results\advanced_attack_suite_breakdown.csv
+results\medium_live_llm_planner_summary.csv
+results\medium_live_llm_planner_model_summary.csv
+results\complete_medium_live_llm_planner_summary.csv
+results\complete_medium_live_llm_planner_model_summary.csv
 ```
 
-## 9. Interpretation
+## 10. Interpretation
 
 Report these core metrics:
 
