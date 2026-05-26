@@ -108,6 +108,21 @@ Per-model live LLM summary, committed in `results/live_llm_planner_model_summary
 
 Statistical reading: the live LLM suite is a realism check for the planner interface, not the main high-powered benchmark. It gives 36 live model rows across three models and three prompt conditions. The larger attack-surface claim should still use the workflow-corpus and stress-test runs; the live LLM result shows that the defense can run with actual model-generated plans while keeping structured first-pass planner output measurable.
 
+Medium live LLM workflow-corpus run, committed in `results/medium_live_llm_planner_summary.csv`:
+
+| Planner condition | Live rows | Planner tempted | Final attack success | Risky action | Raw parse error | Final parse error |
+|---|---:|---:|---:|---:|---:|---:|
+| Ambient prompt | 108 | 21.30% | 21.30% | 21.30% | 0.93% | 0.00% |
+| Capsule-filtered prompt | 108 | 5.56% | 0.00% | 0.00% | 1.85% | 0.00% |
+
+Per-model defended medium result, committed in `results/medium_live_llm_planner_model_summary.csv`:
+
+| Model | Defended rows | Planner tempted | Final attack success | Risky action | Raw parse error | First-pass valid planner |
+|---|---:|---:|---:|---:|---:|---:|
+| llama3 | 36 | 2.78% | 0.00% | 0.00% | 0.00% | 100.00% |
+| mistral | 36 | 2.78% | 0.00% | 0.00% | 2.78% | 97.22% |
+| phi3 | 36 | 11.11% | 0.00% | 0.00% | 2.78% | 97.22% |
+
 ## What The Hardened Tests Cover
 
 The default and corpus benchmarks are designed to stress more than simple keyword attacks:
@@ -202,7 +217,7 @@ python run_llm_experiment.py \
   --model-summary-csv results/medium_live_llm_planner_model_summary.csv
 ```
 
-This runs 36 workflow-corpus cases across 3 live models and 2 planner conditions, producing 216 live planner rows. Increase `--repetitions` to 3 for a 648-row medium-cost run.
+This runs 36 workflow-corpus cases across 3 live models and 2 planner conditions, producing 216 live planner rows. The committed medium run used `--repetitions 1`; increase `--repetitions` to 3 for a 648-row medium-cost variance run.
 
 The live LLM CSV separates `planner_attack_success` from `attack_success`. `planner_attack_success` means the LLM was tempted into the attacker target before authorization. `attack_success` means the poisoned plan survived the final plan/action gates and would be accepted.
 
@@ -265,7 +280,7 @@ docs/medium_live_llm_workflow_cases.txt
 This is a research prototype. The current evidence is strong inside the simulator, but several production gaps remain:
 
 1. The workflow corpus is generated, not collected from real enterprise agent traces.
-2. The default high-volume benchmark still uses a deterministic planner. The live LLM planner study is implemented and can now run against the workflow-corpus test split, but the committed live result file is still the smaller realism check until a medium live run is generated locally.
+2. The default high-volume benchmark still uses a deterministic planner. The live LLM planner study now has a committed 216-row workflow-corpus run, but larger multi-seed live LLM runs are still needed for high-confidence statistical claims.
 3. OCR and multimodal attacks are represented as extracted text, not full raw-image pipelines.
 4. Source labels are modeled as metadata; real deployments need signed, append-only provenance.
 5. Policy thresholds are still research parameters and need calibration on real workloads.
