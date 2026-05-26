@@ -186,6 +186,26 @@ python run_llm_experiment.py --provider local
 python run_llm_experiment.py --provider ollama --models llama3,mistral,phi3 --repetitions 3
 ```
 
+Medium live LLM workflow-corpus suite:
+
+```bash
+python run_llm_experiment.py \
+  --provider ollama \
+  --models llama3,mistral,phi3 \
+  --case-source workflow-corpus \
+  --workflow-corpus data/workflow_corpus_splits/test.jsonl \
+  --case-limit 36 \
+  --case-seed 2026 \
+  --repetitions 1 \
+  --output-csv results/medium_live_llm_planner_suite.csv \
+  --summary-csv results/medium_live_llm_planner_summary.csv \
+  --model-summary-csv results/medium_live_llm_planner_model_summary.csv
+```
+
+This runs 36 workflow-corpus cases across 3 live models and 2 planner conditions, producing 216 live planner rows. Increase `--repetitions` to 3 for a 648-row medium-cost run.
+
+The live LLM CSV separates `planner_attack_success` from `attack_success`. `planner_attack_success` means the LLM was tempted into the attacker target before authorization. `attack_success` means the poisoned plan survived the final plan/action gates and would be accepted.
+
 ## Testing
 
 ```bash
@@ -233,12 +253,19 @@ run_capsuleguard.py            Main benchmark runner
 generate_workflow_corpus.py    Corpus generation entry point
 ```
 
+Useful live LLM notes:
+
+```text
+docs/live_llm_planner_test_cases.txt
+docs/medium_live_llm_workflow_cases.txt
+```
+
 ## Honest Limits
 
 This is a research prototype. The current evidence is strong inside the simulator, but several production gaps remain:
 
 1. The workflow corpus is generated, not collected from real enterprise agent traces.
-2. The default high-volume benchmark still uses a deterministic planner. The live LLM planner study is now implemented and reported, but it is a small realism check rather than a large statistical benchmark.
+2. The default high-volume benchmark still uses a deterministic planner. The live LLM planner study is implemented and can now run against the workflow-corpus test split, but the committed live result file is still the smaller realism check until a medium live run is generated locally.
 3. OCR and multimodal attacks are represented as extracted text, not full raw-image pipelines.
 4. Source labels are modeled as metadata; real deployments need signed, append-only provenance.
 5. Policy thresholds are still research parameters and need calibration on real workloads.

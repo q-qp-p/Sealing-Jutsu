@@ -7,6 +7,9 @@ from pathlib import Path
 from urllib import request
 
 from capsule_guard.llm_experiment import (
+    LLMExperimentCase,
+    default_llm_experiment_cases,
+    load_llm_cases_from_workflow_corpus,
     local_profile_provider,
     run_llm_multi_model_suite,
     summarize_llm_suite_rows_by_model,
@@ -33,6 +36,30 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument("--repetitions", type=int, default=1)
+    parser.add_argument(
+        "--case-source",
+        choices=("default", "workflow-corpus"),
+        default="default",
+        help="Use the small hand-written LLM cases or the generated workflow-corpus benchmark.",
+    )
+    parser.add_argument(
+        "--workflow-corpus",
+        type=Path,
+        default=Path("data") / "workflow_corpus_splits" / "test.jsonl",
+        help="JSONL workflow corpus to use when --case-source workflow-corpus.",
+    )
+    parser.add_argument(
+        "--case-limit",
+        type=int,
+        default=0,
+        help="Maximum workflow-corpus cases to sample. Use 0 for all available cases.",
+    )
+    parser.add_argument(
+        "--case-seed",
+        type=int,
+        default=2026,
+        help="Deterministic seed for workflow-corpus case sampling.",
+    )
     parser.add_argument("--output-csv", type=Path, default=Path("results") / "capsule_llm_planner_suite.csv")
     parser.add_argument("--summary-csv", type=Path, default=Path("results") / "capsule_llm_planner_summary.csv")
     parser.add_argument(
@@ -57,15 +84,34 @@ def build_providers(args: argparse.Namespace):
     return providers
 
 
+def build_llm_cases(args: argparse.Namespace) -> list[LLMExperimentCase]:
+    if args.case_limit < 0:
+        raise ValueError("--case-limit must be non-negative")
+    limit = args.case_limit or None
+    if args.case_source == "workflow-corpus":
+        return load_llm_cases_from_workflow_corpus(
+            args.workflow_corpus,
+            limit=limit,
+            seed=args.case_seed,
+        )
+    return default_llm_experiment_cases()
+
+
 def main() -> None:
     parser = build_parser()
     args = parser.parse_args()
     providers = build_providers(args)
-    rows = run_llm_multi_model_suite(providers, repetitions=args.repetitions)
+    cases = build_llm_cases(args)
+    rows = run_llm_multi_model_suite(providers, repetitions=args.repetitions, cases=cases)
     write_llm_suite_csv(rows, args.output_csv)
     write_llm_summary_csv(rows, args.summary_csv)
     write_llm_model_summary_csv(rows, args.model_summary_csv)
 
+    print(f"Case source: {args.case_source}")
+    print(f"Cases: {len(cases)}")
+    print(f"Models: {', '.join(providers)}")
+    print(f"Repetitions: {args.repetitions}")
+    print(f"Rows: {len(rows)}")
     for row in rows:
         print(row)
     print("\nSummary:")
