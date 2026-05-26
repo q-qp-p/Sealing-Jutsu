@@ -10,7 +10,7 @@
 
 <p align="center">
   <a href="#quick-start"><img alt="Python" src="https://img.shields.io/badge/python-3.10%2B-111827"></a>
-  <a href="#testing"><img alt="Tests" src="https://img.shields.io/badge/tests-96%20passing-1f883d"></a>
+  <a href="#testing"><img alt="Tests" src="https://img.shields.io/badge/tests-112%20passing-1f883d"></a>
   <a href="#current-evidence"><img alt="Held-out ASR" src="https://img.shields.io/badge/held--out%20ASR-0.00%25-0f766e"></a>
   <a href="#honest-limits"><img alt="Scope" src="https://img.shields.io/badge/scope-research%20prototype-7c2d12"></a>
 </p>
@@ -90,6 +90,24 @@ The corpus currently contains 120 generated workflow records across 8 domains:
 
 The benchmark includes vendor recommendation, email, calendar, file search, CRM notes, web research, OCR-style documents, and tool-chain workflows.
 
+Live LLM planner check, committed in `results/live_llm_planner_summary.csv`:
+
+| Planner condition | Live rows | Attack success | Raw parse error | First-pass valid planner | Final parse error |
+|---|---:|---:|---:|---:|---:|
+| Ambient prompt | 9 | 0.00% | 0.00% | 100.00% | 0.00% |
+| Capsule-filtered prompt | 18 | 0.00% | 0.00% | 100.00% | 0.00% |
+| Jailbreak-style prompt | 9 | 0.00% | 0.00% | 100.00% | 0.00% |
+
+Per-model live LLM summary, committed in `results/live_llm_planner_model_summary.csv`:
+
+| Model | Conditions tested | Live rows | Attack success | Raw parse error | First-pass valid planner |
+|---|---:|---:|---:|---:|---:|
+| llama3 | 3 | 12 | 0.00% | 0.00% | 100.00% |
+| mistral | 3 | 12 | 0.00% | 0.00% | 100.00% |
+| phi3 | 3 | 12 | 0.00% | 0.00% | 100.00% |
+
+Statistical reading: the live LLM suite is a realism check for the planner interface, not the main high-powered benchmark. It gives 36 live model rows across three models and three prompt conditions. The larger attack-surface claim should still use the workflow-corpus and stress-test runs; the live LLM result shows that the defense can run with actual model-generated plans while keeping structured first-pass planner output measurable.
+
 ## What The Hardened Tests Cover
 
 The default and corpus benchmarks are designed to stress more than simple keyword attacks:
@@ -165,7 +183,7 @@ LLM-provider experiment harness:
 
 ```bash
 python run_llm_experiment.py --provider local
-python run_llm_experiment.py --provider ollama --endpoint http://localhost:11434/api/generate --model llama3.1
+python run_llm_experiment.py --provider ollama --models llama3,mistral,phi3 --repetitions 3
 ```
 
 ## Testing
@@ -177,7 +195,7 @@ python -m unittest discover -s tests
 Expected current result:
 
 ```text
-Ran 96 tests
+Ran 112 tests
 OK
 ```
 
@@ -196,6 +214,9 @@ results/
   workflow_corpus_test_split_traces.jsonl
   workflow_corpus_test_split_tool_traces.csv
   workflow_corpus_test_split_charts/
+  live_llm_planner_summary.csv
+  live_llm_planner_model_summary.csv
+  live_llm_planner_suite.csv
 ```
 
 ## Project Layout
@@ -217,7 +238,7 @@ generate_workflow_corpus.py    Corpus generation entry point
 This is a research prototype. The current evidence is strong inside the simulator, but several production gaps remain:
 
 1. The workflow corpus is generated, not collected from real enterprise agent traces.
-2. The default planner is deterministic; the LLM experiment harness exists, but live model studies need to be run and reported separately.
+2. The default high-volume benchmark still uses a deterministic planner. The live LLM planner study is now implemented and reported, but it is a small realism check rather than a large statistical benchmark.
 3. OCR and multimodal attacks are represented as extracted text, not full raw-image pipelines.
 4. Source labels are modeled as metadata; real deployments need signed, append-only provenance.
 5. Policy thresholds are still research parameters and need calibration on real workloads.
