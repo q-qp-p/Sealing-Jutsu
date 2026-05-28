@@ -10,7 +10,7 @@
 
 <p align="center">
   <a href="#quick-start"><img alt="Python" src="https://img.shields.io/badge/python-3.10%2B-111827"></a>
-  <a href="#testing"><img alt="Tests" src="https://img.shields.io/badge/tests-120%20passing-1f883d"></a>
+  <a href="#testing"><img alt="Tests" src="https://img.shields.io/badge/tests-126%20passing-1f883d"></a>
   <a href="#current-evidence"><img alt="Held-out ASR" src="https://img.shields.io/badge/held--out%20ASR-0.00%25-0f766e"></a>
   <a href="#honest-limits"><img alt="Scope" src="https://img.shields.io/badge/scope-research%20prototype-7c2d12"></a>
 </p>
@@ -243,6 +243,48 @@ python run_capsuleguard.py \
 
 Use this when you want one command to produce both the symbolic high-volume capsule benchmark and the live LLM planner evidence.
 
+High-cost conference-grade LLM evaluation profile:
+
+```bash
+python run_llm_experiment.py \
+  --provider ollama \
+  --models llama3,mistral,phi3,cydonia-chat,cydonia-lysandra \
+  --case-source high-cost \
+  --high-cost-attack-modes workflow_corpus,generated_holdout,adaptive_loop,advanced_attack_suite,attacker_generated \
+  --high-cost-seeds 2026,2027,2028 \
+  --high-cost-cases-per-mode-seed 20 \
+  --high-cost-noise-memories 4 \
+  --repetitions 1 \
+  --output-csv results/high_cost_live_llm_suite.csv \
+  --summary-csv results/high_cost_live_llm_summary.csv \
+  --model-summary-csv results/high_cost_live_llm_model_summary.csv \
+  --audit-jsonl results/high_cost_live_llm_audit.jsonl \
+  --statistics-csv results/high_cost_live_llm_statistics.csv
+```
+
+That profile samples 300 high-cost LLM cases. With two prompt conditions and five models, it produces 3,000 live planner rows. For a 1,000+ case run, raise `--high-cost-cases-per-mode-seed` to `67`, which produces roughly 10,050 live planner rows across five models.
+
+Paid API / OpenAI-compatible provider shape:
+
+```bash
+python run_llm_experiment.py \
+  --provider openai-compatible \
+  --endpoint %CAPSULE_LLM_ENDPOINT% \
+  --api-key-env CAPSULE_LLM_API_KEY \
+  --models paid-model-a,paid-model-b,paid-model-c,paid-model-d,paid-model-e \
+  --case-source high-cost \
+  --high-cost-attack-modes workflow_corpus,generated_holdout,adaptive_loop,advanced_attack_suite,attacker_generated \
+  --high-cost-seeds 2026,2027,2028 \
+  --high-cost-cases-per-mode-seed 20 \
+  --output-csv results/high_cost_paid_llm_suite.csv \
+  --summary-csv results/high_cost_paid_llm_summary.csv \
+  --model-summary-csv results/high_cost_paid_llm_model_summary.csv \
+  --audit-jsonl results/high_cost_paid_llm_audit.jsonl \
+  --statistics-csv results/high_cost_paid_llm_statistics.csv
+```
+
+The high-cost profile writes a raw-output audit JSONL and a paired statistics CSV comparing ambient prompt exposure against capsule-filtered authorization.
+
 ## Testing
 
 ```bash
@@ -252,7 +294,7 @@ python -m unittest discover -s tests
 Expected current result:
 
 ```text
-Ran 120 tests
+Ran 126 tests
 OK
 ```
 

@@ -1,14 +1,22 @@
 from __future__ import annotations
 
+import csv
+import json
+import tempfile
 import unittest
+from pathlib import Path
 
 from capsule_guard.intent import IntentParser
 from capsule_guard.llm_experiment import (
+    build_high_cost_llm_cases,
+    compute_llm_condition_statistics,
     llm_cases_from_workflow_scenarios,
     local_profile_provider,
     run_llm_multi_model_suite,
     summarize_llm_suite_rows_by_model,
     summarize_llm_suite_rows,
+    write_llm_audit_jsonl,
+    write_llm_statistics_csv,
 )
 from capsule_guard.models import MemorySeed, SourceType
 from capsule_guard.planner import LLMPlanner
@@ -390,6 +398,86 @@ class LLMPlannerFullExperimentTests(unittest.TestCase):
         self.assertFalse(capsule_row["decision_allowed"])
         self.assertEqual(capsule_row["decision_reason"], "medium_risk_unapproved_recommendation_requires_confirmation")
         self.assertFalse(capsule_row["attack_success"])
+
+    def test_high_cost_case_builder_mixes_modes_and_records_seed_metadata(self) -> None:
+        cases = build_high_cost_llm_cases(
+            attack_modes=("generated_holdout", "adaptive_loop"),
+            seeds=(2026, 2027),
+            cases_per_mode_seed=3,
+            noise_memories=1,
+        )
+
+        self.assertEqual(len(cases), 12)
+        self.assertEqual({case.case_source for case in cases}, {"generated_holdout", "adaptive_loop"})
+        self.assertEqual({case.case_seed for case in cases}, {2026, 2027})
+        self.assertTrue(all(case.attack_type for case in cases))
+        self.assertTrue(all(case.case_id.startswith(("generated_holdout-", "adaptive_loop-")) for case in cases))
+
+    def test_llm_statistics_compare_paired_ambient_and_defended_rows(self) -> None:
+        rows = [
+            {
+                "model": "m1",
+                "case_id": "c1",
+                "repetition": 0,
+                "condition": "ambient_prompt",
+                "attack_success": True,
+                "unauthorized_risky_action": True,
+            },
+            {
+                "model": "m1",
+                "case_id": "c1",
+                "repetition": 0,
+                "condition": "capsule_filtered_prompt",
+                "attack_success": False,
+                "unauthorized_risky_action": False,
+            },
+            {
+                "model": "m1",
+                "case_id": "c2",
+                "repetition": 0,
+                "condition": "ambient_prompt",
+                "attack_success": False,
+                "unauthorized_risky_action": False,
+            },
+            {
+                "model": "m1",
+                "case_id": "c2",
+                "repetition": 0,
+                "condition": "capsule_filtered_prompt",
+                "attack_success": False,
+                "unauthorized_risky_action": False,
+            },
+        ]
+
+        stats = compute_llm_condition_statistics(rows)
+
+        self.assertEqual(stats["paired_cases"], 2.0)
+        self.assertEqual(stats["baseline_attack_success_rate"], 0.5)
+        self.assertEqual(stats["defended_attack_success_rate"], 0.0)
+        self.assertEqual(stats["absolute_attack_success_reduction"], 0.5)
+        self.assertEqual(stats["mcnemar_baseline_only"], 1.0)
+        self.assertEqual(stats["mcnemar_defended_only"], 0.0)
+
+    def test_llm_audit_and_statistics_outputs_are_written(self) -> None:
+        rows = run_llm_multi_model_suite(
+            {"local-poison-follower": local_profile_provider("poison_follower")},
+            repetitions=1,
+        )
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            audit_path = Path(temp_dir) / "audit.jsonl"
+            statistics_path = Path(temp_dir) / "statistics.csv"
+            write_llm_audit_jsonl(rows, audit_path)
+            write_llm_statistics_csv(rows, statistics_path)
+            audit_rows = [json.loads(line) for line in audit_path.read_text(encoding="utf-8").splitlines()]
+            with statistics_path.open(newline="", encoding="utf-8") as handle:
+                statistics_rows = list(csv.DictReader(handle))
+
+        self.assertEqual(len(audit_rows), len(rows))
+        self.assertIn("raw_llm_output", audit_rows[0])
+        self.assertIn("final_llm_output", audit_rows[0])
+        self.assertEqual(len(statistics_rows), 1)
+        self.assertIn("absolute_attack_success_reduction", statistics_rows[0])
 
 
 if __name__ == "__main__":

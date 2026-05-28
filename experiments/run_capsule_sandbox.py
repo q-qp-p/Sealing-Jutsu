@@ -11,17 +11,20 @@ from capsule_guard.charts import write_bar_chart
 from capsule_guard.evaluation import default_agent_factories, evaluate, write_attack_breakdown_csv, write_traces_jsonl
 from capsule_guard.gap_closure import read_csv_rows, write_gap_closure_csv
 from capsule_guard.llm_experiment import (
+    build_high_cost_llm_cases,
     default_llm_experiment_cases,
     load_llm_cases_from_workflow_corpus,
     local_profile_provider,
     run_llm_multi_model_suite,
     summarize_llm_suite_rows,
     summarize_llm_suite_rows_by_model,
+    write_llm_audit_jsonl,
     write_llm_model_summary_csv,
+    write_llm_statistics_csv,
     write_llm_suite_csv,
     write_llm_summary_csv,
 )
-from capsule_guard.llm_providers import OllamaGenerateProvider
+from capsule_guard.llm_providers import OllamaGenerateProvider, OpenAICompatibleChatProvider
 from capsule_guard.metrics import Metrics, table
 from capsule_guard.scenarios import generate_scenarios
 from capsule_guard.statistics import aggregate_metric_rows, write_summary_csv
@@ -117,7 +120,7 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Also run the LLM planner benchmark after the capsule sandbox benchmark.",
     )
-    parser.add_argument("--llm-provider", choices=("local", "ollama"), default="local")
+    parser.add_argument("--llm-provider", choices=("local", "ollama", "openai-compatible"), default="local")
     parser.add_argument(
         "--llm-model",
         default=os.environ.get("CAPSULE_LLM_MODEL", ""),
@@ -132,6 +135,7 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument("--llm-endpoint", default=os.environ.get("CAPSULE_LLM_ENDPOINT", ""))
+    parser.add_argument("--llm-api-key-env", default="CAPSULE_LLM_API_KEY")
     parser.add_argument(
         "--llm-timeout-seconds",
         type=float,
@@ -141,7 +145,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--llm-repetitions", type=int, default=1)
     parser.add_argument(
         "--llm-case-source",
-        choices=("default", "workflow-corpus"),
+        choices=("default", "workflow-corpus", "high-cost"),
         default="workflow-corpus",
         help="Use hard-coded LLM cases or the workflow-corpus test split.",
     )
@@ -173,6 +177,16 @@ def build_parser() -> argparse.ArgumentParser:
         type=Path,
         default=Path("results") / "medium_live_llm_planner_model_summary.csv",
     )
+    parser.add_argument("--llm-audit-jsonl", type=Path, default=None)
+    parser.add_argument("--llm-statistics-csv", type=Path, default=None)
+    parser.add_argument(
+        "--llm-high-cost-attack-modes",
+        default="workflow_corpus,generated_holdout,adaptive_loop,advanced_attack_suite,attacker_generated",
+    )
+    parser.add_argument("--llm-high-cost-seeds", default="2026,2027,2028")
+    parser.add_argument("--llm-high-cost-cases-per-mode-seed", type=int, default=25)
+    parser.add_argument("--llm-high-cost-noise-memories", type=int, default=4)
+    parser.add_argument("--llm-high-cost-repetitions", type=int, default=1)
     return parser
 
 
@@ -261,6 +275,10 @@ def run_llm_planner_benchmark(args: argparse.Namespace) -> list[dict[str, object
     write_llm_suite_csv(rows, args.llm_output_csv)
     write_llm_summary_csv(rows, args.llm_summary_csv)
     write_llm_model_summary_csv(rows, args.llm_model_summary_csv)
+    if args.llm_audit_jsonl is not None:
+        write_llm_audit_jsonl(rows, args.llm_audit_jsonl)
+    if args.llm_statistics_csv is not None:
+        write_llm_statistics_csv(rows, args.llm_statistics_csv)
 
     print("\nLLM planner benchmark:")
     print(f"Provider: {args.llm_provider}")
@@ -278,6 +296,10 @@ def run_llm_planner_benchmark(args: argparse.Namespace) -> list[dict[str, object
     print(f"Wrote LLM planner suite CSV: {args.llm_output_csv}")
     print(f"Wrote LLM planner summary CSV: {args.llm_summary_csv}")
     print(f"Wrote LLM planner model summary CSV: {args.llm_model_summary_csv}")
+    if args.llm_audit_jsonl is not None:
+        print(f"Wrote LLM raw output audit JSONL: {args.llm_audit_jsonl}")
+    if args.llm_statistics_csv is not None:
+        print(f"Wrote LLM paired statistics CSV: {args.llm_statistics_csv}")
     return rows
 
 
@@ -298,6 +320,19 @@ def _llm_providers(args: argparse.Namespace):
             )
             for model_name in model_names
         }
+    if args.llm_provider == "openai-compatible":
+        if not args.llm_endpoint:
+            raise ValueError("--llm-endpoint or CAPSULE_LLM_ENDPOINT is required for openai-compatible provider")
+        api_key = os.environ.get(args.llm_api_key_env, "")
+        return {
+            model_name: OpenAICompatibleChatProvider(
+                endpoint=args.llm_endpoint,
+                model=model_name,
+                api_key=api_key,
+                timeout_seconds=args.llm_timeout_seconds,
+            )
+            for model_name in model_names
+        }
     raise ValueError(f"Unsupported LLM provider: {args.llm_provider}")
 
 
@@ -309,7 +344,7 @@ def _llm_model_names(args: argparse.Namespace) -> list[str]:
             if args.llm_provider == "local"
             else "llama3,mistral,phi3"
         )
-    names = [item.strip() for item in raw.split(",") if item.strip()]
+    names = _csv_values(raw)
     if not names:
         raise ValueError("At least one LLM model/profile is required")
     return names
@@ -324,7 +359,20 @@ def _llm_cases(args: argparse.Namespace):
             limit=args.llm_case_limit or None,
             seed=args.llm_case_seed,
         )
+    if args.llm_case_source == "high-cost":
+        return build_high_cost_llm_cases(
+            attack_modes=tuple(_csv_values(args.llm_high_cost_attack_modes)),
+            seeds=tuple(int(item) for item in _csv_values(args.llm_high_cost_seeds)),
+            cases_per_mode_seed=args.llm_high_cost_cases_per_mode_seed,
+            noise_memories=args.llm_high_cost_noise_memories,
+            repetitions=args.llm_high_cost_repetitions,
+            workflow_corpus_path=args.llm_workflow_corpus,
+        )
     return default_llm_experiment_cases()
+
+
+def _csv_values(raw: str) -> list[str]:
+    return [item.strip() for item in raw.split(",") if item.strip()]
 
 
 def _write_rows_csv(rows: list[dict[str, object]], output_path: Path) -> None:

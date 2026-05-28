@@ -79,6 +79,34 @@ class LLMExperimentCliTests(unittest.TestCase):
         self.assertTrue(all(case.case_id for case in cases))
         self.assertTrue(all(case.query for case in cases))
 
+    def test_cli_accepts_high_cost_profile_outputs(self) -> None:
+        args = build_parser().parse_args(
+            [
+                "--provider",
+                "local",
+                "--models",
+                "poison_follower,strict_safe,malformed,jailbreak_prone,poison_follower",
+                "--case-source",
+                "high-cost",
+                "--high-cost-attack-modes",
+                "generated_holdout,adaptive_loop,advanced_attack_suite",
+                "--high-cost-seeds",
+                "2026,2027",
+                "--high-cost-cases-per-mode-seed",
+                "4",
+                "--audit-jsonl",
+                "results/high_cost_audit.jsonl",
+                "--statistics-csv",
+                "results/high_cost_statistics.csv",
+            ]
+        )
+
+        self.assertEqual(args.case_source, "high-cost")
+        self.assertEqual(args.high_cost_seeds, "2026,2027")
+        self.assertEqual(args.high_cost_cases_per_mode_seed, 4)
+        self.assertEqual(args.audit_jsonl.name, "high_cost_audit.jsonl")
+        self.assertEqual(args.statistics_csv.name, "high_cost_statistics.csv")
+
 
 if __name__ == "__main__":
     unittest.main()

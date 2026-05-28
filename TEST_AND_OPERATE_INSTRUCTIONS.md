@@ -15,7 +15,7 @@ python -m unittest discover -s tests
 Expected current result:
 
 ```text
-Ran 120 tests
+Ran 126 tests
 OK
 ```
 
@@ -146,7 +146,31 @@ raw_parse_error_rate = first model output failed planner schema
 parse_error_rate = final planner parse failed after repair
 ```
 
-## 9. Result Files
+## 9. High-Cost Conference-Grade LLM Evaluation
+
+Fast local smoke for the high-cost machinery:
+
+```powershell
+python run_llm_experiment.py --provider local --models poison_follower,strict_safe,malformed,jailbreak_prone,poison_follower_alt --case-source high-cost --high-cost-attack-modes generated_holdout,adaptive_loop,advanced_attack_suite --high-cost-seeds 2026,2027 --high-cost-cases-per-mode-seed 3 --high-cost-noise-memories 2 --repetitions 1 --output-csv results\high_cost_local_smoke_suite.csv --summary-csv results\high_cost_local_smoke_summary.csv --model-summary-csv results\high_cost_local_smoke_model_summary.csv --audit-jsonl results\high_cost_local_smoke_audit.jsonl --statistics-csv results\high_cost_local_smoke_statistics.csv
+```
+
+Five-model Ollama run, 300 high-cost cases and 3,000 live planner rows:
+
+```powershell
+python run_llm_experiment.py --provider ollama --models llama3,mistral,phi3,cydonia-chat,cydonia-lysandra --case-source high-cost --high-cost-attack-modes workflow_corpus,generated_holdout,adaptive_loop,advanced_attack_suite,attacker_generated --high-cost-seeds 2026,2027,2028 --high-cost-cases-per-mode-seed 20 --high-cost-noise-memories 4 --repetitions 1 --output-csv results\high_cost_live_llm_suite.csv --summary-csv results\high_cost_live_llm_summary.csv --model-summary-csv results\high_cost_live_llm_model_summary.csv --audit-jsonl results\high_cost_live_llm_audit.jsonl --statistics-csv results\high_cost_live_llm_statistics.csv
+```
+
+Paid API or OpenAI-compatible run:
+
+```powershell
+$env:CAPSULE_LLM_ENDPOINT="https://api.example.test/v1/chat/completions"
+$env:CAPSULE_LLM_API_KEY="your_api_key_here"
+python run_llm_experiment.py --provider openai-compatible --endpoint $env:CAPSULE_LLM_ENDPOINT --api-key-env CAPSULE_LLM_API_KEY --models paid-model-a,paid-model-b,paid-model-c,paid-model-d,paid-model-e --case-source high-cost --high-cost-attack-modes workflow_corpus,generated_holdout,adaptive_loop,advanced_attack_suite,attacker_generated --high-cost-seeds 2026,2027,2028 --high-cost-cases-per-mode-seed 20 --output-csv results\high_cost_paid_llm_suite.csv --summary-csv results\high_cost_paid_llm_summary.csv --model-summary-csv results\high_cost_paid_llm_model_summary.csv --audit-jsonl results\high_cost_paid_llm_audit.jsonl --statistics-csv results\high_cost_paid_llm_statistics.csv
+```
+
+Increase `--high-cost-cases-per-mode-seed` to `67` for roughly 1,005 cases and 10,050 live planner rows across five models.
+
+## 10. Result Files
 
 Most important current outputs:
 
@@ -163,9 +187,11 @@ results\medium_live_llm_planner_summary.csv
 results\medium_live_llm_planner_model_summary.csv
 results\complete_medium_live_llm_planner_summary.csv
 results\complete_medium_live_llm_planner_model_summary.csv
+results\high_cost_local_smoke_summary.csv
+results\high_cost_local_smoke_statistics.csv
 ```
 
-## 10. Interpretation
+## 11. Interpretation
 
 Report these core metrics:
 

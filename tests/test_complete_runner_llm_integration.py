@@ -38,6 +38,55 @@ class CompleteRunnerLLMIntegrationTests(unittest.TestCase):
         self.assertEqual(args.llm_repetitions, 1)
         self.assertEqual(args.llm_timeout_seconds, 300.0)
 
+    def test_complete_runner_accepts_openai_compatible_llm_provider_options(self) -> None:
+        args = build_parser().parse_args(
+            [
+                "--include-llm-planner",
+                "--llm-provider",
+                "openai-compatible",
+                "--llm-endpoint",
+                "https://api.example.test/v1/chat/completions",
+                "--llm-api-key-env",
+                "OPENAI_API_KEY",
+                "--llm-models",
+                "paid-model-a,paid-model-b",
+            ]
+        )
+
+        self.assertEqual(args.llm_provider, "openai-compatible")
+        self.assertEqual(args.llm_endpoint, "https://api.example.test/v1/chat/completions")
+        self.assertEqual(args.llm_api_key_env, "OPENAI_API_KEY")
+        self.assertEqual(args.llm_models, "paid-model-a,paid-model-b")
+
+    def test_complete_runner_accepts_high_cost_llm_case_profile_outputs(self) -> None:
+        args = build_parser().parse_args(
+            [
+                "--include-llm-planner",
+                "--llm-provider",
+                "local",
+                "--llm-models",
+                "poison_follower,strict_safe,malformed,jailbreak_prone,poison_follower_alt",
+                "--llm-case-source",
+                "high-cost",
+                "--llm-high-cost-attack-modes",
+                "generated_holdout,adaptive_loop",
+                "--llm-high-cost-seeds",
+                "2026,2027",
+                "--llm-high-cost-cases-per-mode-seed",
+                "3",
+                "--llm-audit-jsonl",
+                "results/high_cost_audit.jsonl",
+                "--llm-statistics-csv",
+                "results/high_cost_statistics.csv",
+            ]
+        )
+
+        self.assertEqual(args.llm_case_source, "high-cost")
+        self.assertEqual(args.llm_high_cost_seeds, "2026,2027")
+        self.assertEqual(args.llm_high_cost_cases_per_mode_seed, 3)
+        self.assertEqual(args.llm_audit_jsonl.name, "high_cost_audit.jsonl")
+        self.assertEqual(args.llm_statistics_csv.name, "high_cost_statistics.csv")
+
     def test_complete_runner_writes_llm_planner_outputs(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             output_dir = Path(temp_dir)
