@@ -98,6 +98,8 @@ class LLMExperimentCliTests(unittest.TestCase):
                 "results/high_cost_audit.jsonl",
                 "--statistics-csv",
                 "results/high_cost_statistics.csv",
+                "--gap-report-csv",
+                "results/high_cost_gap_report.csv",
             ]
         )
 
@@ -106,6 +108,7 @@ class LLMExperimentCliTests(unittest.TestCase):
         self.assertEqual(args.high_cost_cases_per_mode_seed, 4)
         self.assertEqual(args.audit_jsonl.name, "high_cost_audit.jsonl")
         self.assertEqual(args.statistics_csv.name, "high_cost_statistics.csv")
+        self.assertEqual(args.gap_report_csv.name, "high_cost_gap_report.csv")
 
     def test_cli_accepts_openai_responses_provider_for_codex_models(self) -> None:
         args = build_parser().parse_args(

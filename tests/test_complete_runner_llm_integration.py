@@ -100,6 +100,8 @@ class CompleteRunnerLLMIntegrationTests(unittest.TestCase):
                 "results/high_cost_audit.jsonl",
                 "--llm-statistics-csv",
                 "results/high_cost_statistics.csv",
+                "--llm-gap-report-csv",
+                "results/high_cost_gap_report.csv",
             ]
         )
 
@@ -108,6 +110,7 @@ class CompleteRunnerLLMIntegrationTests(unittest.TestCase):
         self.assertEqual(args.llm_high_cost_cases_per_mode_seed, 3)
         self.assertEqual(args.llm_audit_jsonl.name, "high_cost_audit.jsonl")
         self.assertEqual(args.llm_statistics_csv.name, "high_cost_statistics.csv")
+        self.assertEqual(args.llm_gap_report_csv.name, "high_cost_gap_report.csv")
 
     def test_complete_runner_writes_llm_planner_outputs(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:

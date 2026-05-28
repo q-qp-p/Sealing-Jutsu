@@ -10,7 +10,7 @@
 
 <p align="center">
   <a href="#quick-start"><img alt="Python" src="https://img.shields.io/badge/python-3.10%2B-111827"></a>
-  <a href="#testing"><img alt="Tests" src="https://img.shields.io/badge/tests-126%20passing-1f883d"></a>
+  <a href="#testing"><img alt="Tests" src="https://img.shields.io/badge/tests-136%20passing-1f883d"></a>
   <a href="#current-evidence"><img alt="Held-out ASR" src="https://img.shields.io/badge/held--out%20ASR-0.00%25-0f766e"></a>
   <a href="#honest-limits"><img alt="Scope" src="https://img.shields.io/badge/scope-research%20prototype-7c2d12"></a>
 </p>
@@ -164,6 +164,19 @@ python run_capsuleguard.py \
   --charts-dir results/workflow_corpus_test_split_charts
 ```
 
+Run an external or lab-collected agent trace corpus:
+
+```bash
+python run_capsuleguard.py \
+  --attack-mode trace_corpus \
+  --workflow-corpus data/agent_trace_corpus_sample.jsonl \
+  --summary-csv results/trace_corpus_summary.csv \
+  --trace-jsonl results/trace_corpus_traces.jsonl \
+  --tool-trace-csv results/trace_corpus_tool_traces.csv
+```
+
+`trace_corpus` accepts exported JSONL session records with flexible `task`, `events`, `messages`, or `steps` fields. It is the intended path for replacing generated scenarios with real or lab-user traces.
+
 Generate a fresh workflow corpus:
 
 ```bash
@@ -184,6 +197,7 @@ python run_capsuleguard.py --attack-mode extreme
 python run_capsuleguard.py --attack-mode holdout
 python run_capsuleguard.py --attack-mode adaptive_loop
 python run_capsuleguard.py --attack-mode workflow_corpus --workflow-corpus data/workflow_corpus_splits/test.jsonl
+python run_capsuleguard.py --attack-mode trace_corpus --workflow-corpus data/agent_trace_corpus_sample.jsonl
 python run_capsuleguard.py --attack-mode multimodal
 python run_capsuleguard.py --attack-mode attacker_generated
 ```
@@ -260,7 +274,8 @@ python run_llm_experiment.py \
   --summary-csv results/high_cost_live_llm_summary.csv \
   --model-summary-csv results/high_cost_live_llm_model_summary.csv \
   --audit-jsonl results/high_cost_live_llm_audit.jsonl \
-  --statistics-csv results/high_cost_live_llm_statistics.csv
+  --statistics-csv results/high_cost_live_llm_statistics.csv \
+  --gap-report-csv results/high_cost_live_llm_gap_report.csv
 ```
 
 That profile samples 300 high-cost LLM cases. With two prompt conditions and five models, it produces 3,000 live planner rows. For a 1,000+ case run, raise `--high-cost-cases-per-mode-seed` to `67`, which produces roughly 10,050 live planner rows across five models.
@@ -285,6 +300,7 @@ python run_llm_experiment.py \
 ```
 
 The high-cost profile writes a raw-output audit JSONL and a paired statistics CSV comparing ambient prompt exposure against capsule-filtered authorization.
+The optional gap report CSV labels whether baseline attack pressure is in the target band, whether defended planner temptation is contained, and whether final defended ASR is closed.
 
 OpenAI Responses / Codex provider shape:
 
@@ -301,7 +317,8 @@ python run_llm_experiment.py \
   --summary-csv results/high_cost_openai_responses_summary.csv \
   --model-summary-csv results/high_cost_openai_responses_model_summary.csv \
   --audit-jsonl results/high_cost_openai_responses_audit.jsonl \
-  --statistics-csv results/high_cost_openai_responses_statistics.csv
+  --statistics-csv results/high_cost_openai_responses_statistics.csv \
+  --gap-report-csv results/high_cost_openai_responses_gap_report.csv
 ```
 
 This path uses OpenAI's Responses API with strict JSON Schema output for `recommendation`, `action`, and `rationale`. Use it for Codex-class API models when paid live-model evidence is needed; keep the raw-output audit JSONL for reviewer inspection.
@@ -315,7 +332,7 @@ python -m unittest discover -s tests
 Expected current result:
 
 ```text
-Ran 126 tests
+Ran 136 tests
 OK
 ```
 
@@ -364,7 +381,7 @@ docs/medium_live_llm_workflow_cases.txt
 
 This is a research prototype. The current evidence is strong inside the simulator, but several production gaps remain:
 
-1. The workflow corpus is generated, not collected from real enterprise agent traces.
+1. The included workflow corpus is generated. The repo now includes a `trace_corpus` import path for real or lab-collected agent traces, but conference claims should still run on traces collected outside the generator.
 2. The default high-volume benchmark still uses a deterministic planner. The live LLM planner study now has a committed 216-row workflow-corpus run, but larger multi-seed live LLM runs are still needed for high-confidence statistical claims.
 3. OCR and multimodal attacks are represented as extracted text, not full raw-image pipelines.
 4. Source labels are modeled as metadata; real deployments need signed, append-only provenance.

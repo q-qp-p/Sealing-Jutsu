@@ -28,6 +28,26 @@ python run_capsuleguard.py --attack-mode workflow_corpus --workflow-corpus path\
 
 This is important because new benchmark records can now be added without changing `capsule_guard\scenarios.py`. That makes the evaluation closer to a reusable benchmark corpus and easier to replace with real exported workflow traces later.
 
+## Agent Trace Corpus Mode
+
+The project now also supports a separate `trace_corpus` mode for exported agent sessions. This is the stronger realism path because it accepts trace-shaped records rather than only generated workflow records.
+
+Sample trace corpus:
+
+```text
+data\agent_trace_corpus_sample.jsonl
+```
+
+Command:
+
+```powershell
+python run_capsuleguard.py --attack-mode trace_corpus --workflow-corpus data\agent_trace_corpus_sample.jsonl
+```
+
+Accepted record shapes may use `trace_id`, `session_id`, or `id`; `task.query` or top-level `query`; and memory-like `events`, `messages`, or `steps`. Each event may store content in `content`, `text`, `message`, `payload.text`, or `payload.content`.
+
+This does not magically create a public real-world benchmark, but it removes the code-level blocker: collected logs can now be redacted, labeled, and evaluated without editing Python scenario templates.
+
 ## Held-Out Split Corpus
 
 The project now also includes an independent split-corpus generator:
@@ -187,6 +207,7 @@ Before this change, most benchmark scenarios were embedded directly in Python. N
 - Add records without editing code.
 - Share the corpus with reviewers.
 - Replace seeded traces with collected workflow logs.
+- Import exported agent sessions through `trace_corpus`.
 - Maintain train/development/test corpus splits.
 - Run the same corpus across multiple defenses.
 
@@ -194,9 +215,9 @@ Before this change, most benchmark scenarios were embedded directly in Python. N
 
 This closes part of the synthetic-scenario gap, but not all of it.
 
-The included corpus is still a curated local benchmark corpus, not a public real-world trace dataset collected from deployed agents. The stronger claim is:
+The included workflow corpus is still a curated local benchmark corpus, not a public real-world trace dataset collected from deployed agents. The stronger claim is:
 
-> The benchmark now supports external workflow trace corpora and includes a larger JSONL corpus with realistic event structure.
+> The benchmark now supports external workflow and agent trace corpora, includes a larger JSONL corpus with realistic event structure, and can ingest exported real/lab traces through `trace_corpus`.
 
 The claim is not:
 

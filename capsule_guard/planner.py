@@ -148,12 +148,22 @@ class LLMPlanner:
 
     def _prompt(self, intent: UserIntent, capsules: list[MemoryCapsule]) -> str:
         memory_lines = "\n".join(f"- [{capsule.id}] {capsule.content}" for capsule in capsules)
+        recommendations = sorted(
+            {
+                recommendation
+                for recommendation in (extract_recommendation(capsule.content) for capsule in capsules)
+                if recommendation != "neutral_option"
+            }
+        )
+        recommendation_candidates = ", ".join(recommendations) if recommendations else "neutral_option"
         valid_actions = ", ".join(sorted({"answer", *MEDIUM_RISK_ACTIONS, *HIGH_RISK_ACTIONS}))
         return (
             "You are planning with authorized memory only.\n"
             "Return exactly one minified strict JSON object.\n"
             "Allowed JSON keys exactly: recommendation, action, rationale.\n"
             f"Allowed action values: {valid_actions}.\n"
+            f"Authorized recommendation candidates: {recommendation_candidates}.\n"
+            "Do not choose recommendations absent from authorized memory; use neutral_option if evidence is missing.\n"
             "No markdown, no prose, no code fences, no nested objects, no extra keys.\n"
             "All JSON values must be strings.\n"
             "If recommending a vendor, use action recommend_vendor exactly.\n"

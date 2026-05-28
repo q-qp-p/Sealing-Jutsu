@@ -34,6 +34,9 @@ Raw output audit trail for reviewer inspection.
 results\high_cost_openai_responses_statistics.csv
 Paired ambient-versus-defended statistics, including absolute ASR reduction and McNemar-style significance approximation.
 
+results\high_cost_openai_responses_gap_report.csv
+Reviewer-facing gap report showing whether baseline attack pressure is in the target band, whether defended planner temptation is fully blocked, and whether final defended ASR is closed.
+
 Medium Workflow-Corpus Live LLM Command
 What this is for: this is the stronger medium-cost live benchmark. It replaces the tiny hand-written LLM case list with the workflow-corpus test split, while still using actual LLM planners across llama3, mistral, and phi3.
 
@@ -57,6 +60,9 @@ Aggregate results by planner condition.
 
 results\medium_live_llm_planner_model_summary.csv
 Aggregate results by model and condition. This is the table to use for per-model ASR, raw_parse_error_rate, first_pass_valid_planner_rate, and final parse_error_rate.
+
+Optional LLM gap report:
+Add --gap-report-csv results\medium_live_llm_gap_report.csv to any run_llm_experiment.py command. The output reports baseline_attack_pressure_status, defended_planner_tempted_rate, defended_temptation_blocked_rate, defended_final_asr_status, and defended_risky_action_rate.
 
 Per-Model Raw Parse Error Check
 What this is for: this command runs the live LLM planner experiment across llama3, mistral, and phi3, then prints only the per-model raw_parse_error_rate column. Use it when checking whether each model returns a valid planner object on the first attempt before any retry or schema repair.

@@ -19,6 +19,7 @@ from capsule_guard.llm_experiment import (
     summarize_llm_suite_rows,
     summarize_llm_suite_rows_by_model,
     write_llm_audit_jsonl,
+    write_llm_gap_report_csv,
     write_llm_model_summary_csv,
     write_llm_statistics_csv,
     write_llm_suite_csv,
@@ -53,6 +54,7 @@ ATTACK_MODE_CHOICES = (
     "attacker_generated",
     "adaptive_loop",
     "workflow_corpus",
+    "trace_corpus",
 )
 
 ATTACK_MODE_DEFINITIONS = {
@@ -76,6 +78,10 @@ ATTACK_MODE_DEFINITIONS = {
     "workflow_corpus": (
         "Loads scenarios from an external JSONL workflow corpus with session events, memory provenance, "
         "poison labels, expected outcomes, and source metadata."
+    ),
+    "trace_corpus": (
+        "Loads real exported or lab-collected agent trace JSONL records with flexible task/events/messages fields, "
+        "then converts memory-like events into benchmark scenarios."
     ),
 }
 
@@ -183,6 +189,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--llm-audit-jsonl", type=Path, default=None)
     parser.add_argument("--llm-statistics-csv", type=Path, default=None)
+    parser.add_argument("--llm-gap-report-csv", type=Path, default=None)
     parser.add_argument(
         "--llm-high-cost-attack-modes",
         default="workflow_corpus,generated_holdout,adaptive_loop,advanced_attack_suite,attacker_generated",
@@ -199,6 +206,8 @@ def write_attack_mode_definition(attack_mode: str, output: TextIO | None = None)
     definition = ATTACK_MODE_DEFINITIONS.get(attack_mode, "Custom benchmark mode.")
     if attack_mode == "workflow_corpus":
         print("external JSONL workflow corpus benchmark", file=stream)
+    elif attack_mode == "trace_corpus":
+        print("external agent trace JSONL benchmark for real exported workflows", file=stream)
     else:
         print("Hard-coded benchmark", file=stream)
     print(f"Mode: {attack_mode}", file=stream)
@@ -283,6 +292,8 @@ def run_llm_planner_benchmark(args: argparse.Namespace) -> list[dict[str, object
         write_llm_audit_jsonl(rows, args.llm_audit_jsonl)
     if args.llm_statistics_csv is not None:
         write_llm_statistics_csv(rows, args.llm_statistics_csv)
+    if args.llm_gap_report_csv is not None:
+        write_llm_gap_report_csv(rows, args.llm_gap_report_csv)
 
     print("\nLLM planner benchmark:")
     print(f"Provider: {args.llm_provider}")
@@ -304,6 +315,8 @@ def run_llm_planner_benchmark(args: argparse.Namespace) -> list[dict[str, object
         print(f"Wrote LLM raw output audit JSONL: {args.llm_audit_jsonl}")
     if args.llm_statistics_csv is not None:
         print(f"Wrote LLM paired statistics CSV: {args.llm_statistics_csv}")
+    if args.llm_gap_report_csv is not None:
+        print(f"Wrote LLM gap report CSV: {args.llm_gap_report_csv}")
     return rows
 
 

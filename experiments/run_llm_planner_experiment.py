@@ -16,6 +16,7 @@ from capsule_guard.llm_experiment import (
     summarize_llm_suite_rows_by_model,
     summarize_llm_suite_rows,
     write_llm_audit_jsonl,
+    write_llm_gap_report_csv,
     write_llm_model_summary_csv,
     write_llm_statistics_csv,
     write_llm_suite_csv,
@@ -76,6 +77,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--audit-jsonl", type=Path, default=None)
     parser.add_argument("--statistics-csv", type=Path, default=None)
+    parser.add_argument("--gap-report-csv", type=Path, default=None)
     parser.add_argument(
         "--high-cost-attack-modes",
         default="workflow_corpus,generated_holdout,adaptive_loop,advanced_attack_suite,attacker_generated",
@@ -146,6 +148,8 @@ def main() -> None:
         write_llm_audit_jsonl(rows, args.audit_jsonl)
     if args.statistics_csv is not None:
         write_llm_statistics_csv(rows, args.statistics_csv)
+    if args.gap_report_csv is not None:
+        write_llm_gap_report_csv(rows, args.gap_report_csv)
 
     print(f"Case source: {args.case_source}")
     print(f"Cases: {len(cases)}")
@@ -167,6 +171,8 @@ def main() -> None:
         print(f"Wrote LLM raw output audit JSONL: {args.audit_jsonl}")
     if args.statistics_csv is not None:
         print(f"Wrote LLM paired statistics CSV: {args.statistics_csv}")
+    if args.gap_report_csv is not None:
+        print(f"Wrote LLM gap report CSV: {args.gap_report_csv}")
 
 
 def _provider_for_model(args: argparse.Namespace, model_name: str):

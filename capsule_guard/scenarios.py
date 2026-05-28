@@ -1488,6 +1488,10 @@ def generate_scenarios(
         from capsule_guard.workflow_corpus import load_workflow_corpus_scenarios
 
         templates = load_workflow_corpus_scenarios(workflow_corpus_path)
+    elif attack_mode == "trace_corpus":
+        from capsule_guard.workflow_corpus import load_agent_trace_scenarios
+
+        templates = load_agent_trace_scenarios(workflow_corpus_path)
     elif attack_mode != "moderate":
         raise ValueError(f"Unsupported attack_mode: {attack_mode}")
     for repetition in range(repetitions):
