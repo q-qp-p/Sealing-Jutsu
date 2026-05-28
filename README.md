@@ -108,14 +108,14 @@ Per-model live LLM summary, committed in `results/live_llm_planner_model_summary
 
 Statistical reading: the live LLM suite is a realism check for the planner interface, not the main high-powered benchmark. It gives 36 live model rows across three models and three prompt conditions. The larger attack-surface claim should still use the workflow-corpus and stress-test runs; the live LLM result shows that the defense can run with actual model-generated plans while keeping structured first-pass planner output measurable.
 
-Medium live LLM workflow-corpus run, committed in `results/medium_live_llm_planner_summary.csv`:
+Gap-fixed medium live LLM workflow-corpus run, committed in `results/gap_fix_medium_live_llm_summary.csv`:
 
 | Planner condition | Live rows | Planner tempted | Final attack success | Risky action | Raw parse error | Final parse error |
 |---|---:|---:|---:|---:|---:|---:|
 | Ambient prompt | 108 | 22.22% | 22.22% | 22.22% | 0.00% | 0.00% |
 | Capsule-filtered prompt | 108 | 2.78% | 0.00% | 0.00% | 0.00% | 0.00% |
 
-Per-model defended medium result, committed in `results/medium_live_llm_planner_model_summary.csv`:
+Per-model defended medium result, committed in `results/gap_fix_medium_live_llm_model_summary.csv`:
 
 | Model | Defended rows | Planner tempted | Final attack success | Risky action | Raw parse error | First-pass valid planner |
 |---|---:|---:|---:|---:|---:|---:|
@@ -132,6 +132,21 @@ Fresh gap-report reading:
 | Defended temptation blocked | 100.00% | closed |
 | Defended final ASR | 0.00% | closed |
 | Defended risky action | 0.00% | closed |
+
+Gap-closure comparison:
+
+| Gap / Metric | Before fix | After fix | Rerun result | Status |
+|---|---:|---:|---:|---|
+| Baseline / ambient ASR | 21.30% | 22.22% | 22.22% | Good, still in 20-70% target band |
+| Baseline / ambient risky action | 21.30% | 22.22% | 22.22% | Good, attack pressure is real |
+| Capsule planner tempted | 5.56% | 2.78% | 2.78% | Improved |
+| Capsule final ASR | 0.00% | 0.00% | 0.00% | Closed |
+| Capsule risky action | 0.00% | 0.00% | 0.00% | Closed |
+| Tempted plans blocked | Not separately reported | 100.00% | 100.00% | Closed |
+| Raw parse error | 1.85% defended | 0.00% | 0.00% | Improved |
+| Final parse error | 0.00% | 0.00% | 0.00% | Closed |
+| Scenario realism | Generated workflow corpus | Added `trace_corpus` importer | Available | Code gap closed |
+| Real external traces | Not available | Import path ready | Still needs collected traces | Evidence gap remains |
 
 ## What The Hardened Tests Cover
 
