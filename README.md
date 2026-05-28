@@ -112,16 +112,26 @@ Medium live LLM workflow-corpus run, committed in `results/medium_live_llm_plann
 
 | Planner condition | Live rows | Planner tempted | Final attack success | Risky action | Raw parse error | Final parse error |
 |---|---:|---:|---:|---:|---:|---:|
-| Ambient prompt | 108 | 21.30% | 21.30% | 21.30% | 0.93% | 0.00% |
-| Capsule-filtered prompt | 108 | 5.56% | 0.00% | 0.00% | 1.85% | 0.00% |
+| Ambient prompt | 108 | 22.22% | 22.22% | 22.22% | 0.00% | 0.00% |
+| Capsule-filtered prompt | 108 | 2.78% | 0.00% | 0.00% | 0.00% | 0.00% |
 
 Per-model defended medium result, committed in `results/medium_live_llm_planner_model_summary.csv`:
 
 | Model | Defended rows | Planner tempted | Final attack success | Risky action | Raw parse error | First-pass valid planner |
 |---|---:|---:|---:|---:|---:|---:|
 | llama3 | 36 | 2.78% | 0.00% | 0.00% | 0.00% | 100.00% |
-| mistral | 36 | 2.78% | 0.00% | 0.00% | 2.78% | 97.22% |
-| phi3 | 36 | 11.11% | 0.00% | 0.00% | 2.78% | 97.22% |
+| mistral | 36 | 2.78% | 0.00% | 0.00% | 0.00% | 100.00% |
+| phi3 | 36 | 2.78% | 0.00% | 0.00% | 0.00% | 100.00% |
+
+Fresh gap-report reading:
+
+| Gap metric | Result | Status |
+|---|---:|---|
+| Baseline attack pressure | 22.22% | in target band |
+| Defended planner tempted | 2.78% | reduced and contained |
+| Defended temptation blocked | 100.00% | closed |
+| Defended final ASR | 0.00% | closed |
+| Defended risky action | 0.00% | closed |
 
 ## What The Hardened Tests Cover
 
