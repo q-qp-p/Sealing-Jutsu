@@ -8,6 +8,17 @@ from urllib import request
 
 Transport = Callable[[str, dict[str, object], dict[str, str]], dict[str, object]]
 DEFAULT_HTTP_TIMEOUT_SECONDS = 300.0
+OPENAI_RESPONSES_ENDPOINT = "https://api.openai.com/v1/responses"
+PLANNER_RESPONSE_SCHEMA: dict[str, object] = {
+    "type": "object",
+    "properties": {
+        "recommendation": {"type": "string"},
+        "action": {"type": "string"},
+        "rationale": {"type": "string"},
+    },
+    "required": ["recommendation", "action", "rationale"],
+    "additionalProperties": False,
+}
 
 
 class OpenAICompatibleChatProvider:
@@ -48,6 +59,49 @@ class OpenAICompatibleChatProvider:
             headers["Authorization"] = f"Bearer {self.api_key}"
         response = self.transport(self.endpoint, payload, headers)
         content = _extract_chat_content(response)
+        return _parse_json_or_rationale(content)
+
+
+class OpenAIResponsesProvider:
+    def __init__(
+        self,
+        *,
+        endpoint: str = OPENAI_RESPONSES_ENDPOINT,
+        model: str,
+        api_key: str = "",
+        temperature: float = 0.0,
+        timeout_seconds: float = DEFAULT_HTTP_TIMEOUT_SECONDS,
+        transport: Transport | None = None,
+    ) -> None:
+        self.endpoint = endpoint or OPENAI_RESPONSES_ENDPOINT
+        self.model = model
+        self.api_key = api_key
+        self.temperature = temperature
+        self.transport = transport or http_transport_with_timeout(timeout_seconds)
+
+    def __call__(self, prompt: str) -> dict[str, str]:
+        payload: dict[str, object] = {
+            "model": self.model,
+            "input": prompt,
+            "instructions": (
+                "Return exactly one strict JSON object with string keys "
+                "recommendation, action, and rationale. No prose."
+            ),
+            "temperature": self.temperature,
+            "text": {
+                "format": {
+                    "type": "json_schema",
+                    "name": "planner_decision",
+                    "strict": True,
+                    "schema": PLANNER_RESPONSE_SCHEMA,
+                }
+            },
+        }
+        headers = {"Content-Type": "application/json"}
+        if self.api_key:
+            headers["Authorization"] = f"Bearer {self.api_key}"
+        response = self.transport(self.endpoint, payload, headers)
+        content = _extract_responses_text(response)
         return _parse_json_or_rationale(content)
 
 
@@ -101,6 +155,32 @@ def _extract_chat_content(response: dict[str, object]) -> str:
     if not isinstance(message, dict):
         return ""
     return str(message.get("content", ""))
+
+
+def _extract_responses_text(response: dict[str, object]) -> str:
+    output_text = response.get("output_text", "")
+    if isinstance(output_text, str) and output_text:
+        return output_text
+
+    chunks: list[str] = []
+    output = response.get("output", [])
+    if isinstance(output, list):
+        for item in output:
+            if not isinstance(item, dict):
+                continue
+            item_text = item.get("text", "")
+            if isinstance(item_text, str) and item_text:
+                chunks.append(item_text)
+            content = item.get("content", [])
+            if not isinstance(content, list):
+                continue
+            for content_item in content:
+                if not isinstance(content_item, dict):
+                    continue
+                text = content_item.get("text", "")
+                if isinstance(text, str) and text:
+                    chunks.append(text)
+    return "\n".join(chunks)
 
 
 def _parse_json_or_rationale(content: str) -> dict[str, str]:

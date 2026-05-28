@@ -58,6 +58,28 @@ class CompleteRunnerLLMIntegrationTests(unittest.TestCase):
         self.assertEqual(args.llm_api_key_env, "OPENAI_API_KEY")
         self.assertEqual(args.llm_models, "paid-model-a,paid-model-b")
 
+    def test_complete_runner_accepts_openai_responses_llm_provider_options(self) -> None:
+        args = build_parser().parse_args(
+            [
+                "--include-llm-planner",
+                "--llm-provider",
+                "openai-responses",
+                "--llm-api-key-env",
+                "OPENAI_API_KEY",
+                "--llm-models",
+                "gpt-5.2-codex,gpt-5.1-codex",
+                "--llm-case-source",
+                "high-cost",
+                "--llm-high-cost-cases-per-mode-seed",
+                "2",
+            ]
+        )
+
+        self.assertEqual(args.llm_provider, "openai-responses")
+        self.assertEqual(args.llm_api_key_env, "OPENAI_API_KEY")
+        self.assertEqual(args.llm_models, "gpt-5.2-codex,gpt-5.1-codex")
+        self.assertEqual(args.llm_case_source, "high-cost")
+
     def test_complete_runner_accepts_high_cost_llm_case_profile_outputs(self) -> None:
         args = build_parser().parse_args(
             [

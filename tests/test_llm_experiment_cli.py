@@ -107,6 +107,27 @@ class LLMExperimentCliTests(unittest.TestCase):
         self.assertEqual(args.audit_jsonl.name, "high_cost_audit.jsonl")
         self.assertEqual(args.statistics_csv.name, "high_cost_statistics.csv")
 
+    def test_cli_accepts_openai_responses_provider_for_codex_models(self) -> None:
+        args = build_parser().parse_args(
+            [
+                "--provider",
+                "openai-responses",
+                "--models",
+                "gpt-5.2-codex,gpt-5.1-codex",
+                "--api-key-env",
+                "OPENAI_API_KEY",
+                "--case-source",
+                "high-cost",
+                "--high-cost-cases-per-mode-seed",
+                "2",
+            ]
+        )
+        providers = build_providers(args)
+
+        self.assertEqual(args.provider, "openai-responses")
+        self.assertEqual(set(providers), {"gpt-5.2-codex", "gpt-5.1-codex"})
+        self.assertEqual(args.api_key_env, "OPENAI_API_KEY")
+
 
 if __name__ == "__main__":
     unittest.main()

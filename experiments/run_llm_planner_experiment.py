@@ -21,12 +21,16 @@ from capsule_guard.llm_experiment import (
     write_llm_suite_csv,
     write_llm_summary_csv,
 )
-from capsule_guard.llm_providers import OllamaGenerateProvider, OpenAICompatibleChatProvider
+from capsule_guard.llm_providers import OllamaGenerateProvider, OpenAICompatibleChatProvider, OpenAIResponsesProvider
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Run the CapsuleGuard LLM planner prompt-isolation experiment.")
-    parser.add_argument("--provider", choices=("local", "http-json", "openai-compatible", "ollama"), default="local")
+    parser.add_argument(
+        "--provider",
+        choices=("local", "http-json", "openai-compatible", "openai-responses", "ollama"),
+        default="local",
+    )
     parser.add_argument("--endpoint", default=os.environ.get("CAPSULE_LLM_ENDPOINT", ""))
     parser.add_argument("--api-key-env", default="CAPSULE_LLM_API_KEY")
     parser.add_argument("--model", default=os.environ.get("CAPSULE_LLM_MODEL", "local-model"))
@@ -168,6 +172,12 @@ def main() -> None:
 def _provider_for_model(args: argparse.Namespace, model_name: str):
     if args.provider == "openai-compatible":
         return OpenAICompatibleChatProvider(
+            endpoint=args.endpoint,
+            model=model_name,
+            api_key=os.environ.get(args.api_key_env, ""),
+        )
+    if args.provider == "openai-responses":
+        return OpenAIResponsesProvider(
             endpoint=args.endpoint,
             model=model_name,
             api_key=os.environ.get(args.api_key_env, ""),

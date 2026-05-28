@@ -8,7 +8,7 @@ from capsule_guard.attacker import AttackGenerator
 from capsule_guard.compiler import CapsuleCompiler
 from capsule_guard.intent import IntentParser
 from capsule_guard import llm_providers
-from capsule_guard.llm_providers import OllamaGenerateProvider, OpenAICompatibleChatProvider
+from capsule_guard.llm_providers import OllamaGenerateProvider, OpenAICompatibleChatProvider, OpenAIResponsesProvider
 from capsule_guard.models import MemorySeed, SourceType
 from capsule_guard.production_backends import detect_vector_backend_support
 from capsule_guard.scenarios import generate_scenarios
@@ -47,6 +47,70 @@ class RealismUpgradeBatchTests(unittest.TestCase):
         self.assertEqual(calls[0]["headers"]["Authorization"], "Bearer test-key")
         self.assertEqual(calls[0]["payload"]["model"], "test-model")
         self.assertEqual(calls[0]["payload"]["response_format"], {"type": "json_object"})
+
+    def test_openai_responses_provider_uses_strict_structured_outputs(self) -> None:
+        calls: list[dict[str, object]] = []
+
+        def transport(url: str, payload: dict[str, object], headers: dict[str, str]) -> dict[str, object]:
+            calls.append({"url": url, "payload": payload, "headers": headers})
+            return {
+                "output_text": (
+                    '{"recommendation":"trustedvendor","action":"recommend_vendor",'
+                    '"rationale":"responses structured output"}'
+                )
+            }
+
+        provider = OpenAIResponsesProvider(
+            endpoint="https://api.openai.test/v1/responses",
+            model="gpt-5.2-codex",
+            api_key="test-key",
+            transport=transport,
+        )
+
+        result = provider("Return JSON please")
+
+        self.assertEqual(result["recommendation"], "trustedvendor")
+        self.assertEqual(calls[0]["url"], "https://api.openai.test/v1/responses")
+        self.assertEqual(calls[0]["headers"]["Authorization"], "Bearer test-key")
+        payload = calls[0]["payload"]
+        self.assertEqual(payload["model"], "gpt-5.2-codex")
+        self.assertEqual(payload["input"], "Return JSON please")
+        self.assertIn("recommendation, action, and rationale", str(payload["instructions"]))
+        text_format = payload["text"]["format"]  # type: ignore[index]
+        self.assertEqual(text_format["type"], "json_schema")
+        self.assertTrue(text_format["strict"])
+        self.assertEqual(text_format["schema"]["required"], ["recommendation", "action", "rationale"])
+
+    def test_openai_responses_provider_extracts_message_content_text(self) -> None:
+        def transport(url: str, payload: dict[str, object], headers: dict[str, str]) -> dict[str, object]:
+            return {
+                "output": [
+                    {
+                        "type": "message",
+                        "content": [
+                            {
+                                "type": "output_text",
+                                "text": (
+                                    '{"recommendation":"safevendor","action":"answer",'
+                                    '"rationale":"nested response output"}'
+                                ),
+                            }
+                        ],
+                    }
+                ]
+            }
+
+        provider = OpenAIResponsesProvider(
+            endpoint="https://api.openai.test/v1/responses",
+            model="gpt-5.2-codex",
+            transport=transport,
+        )
+
+        result = provider("Return JSON please")
+
+        self.assertEqual(result["recommendation"], "safevendor")
+        self.assertEqual(result["action"], "answer")
+        self.assertEqual(result["_provider_parse_error"], "")
 
     def test_ollama_provider_extracts_fenced_json_from_model_prose(self) -> None:
         calls: list[dict[str, object]] = []

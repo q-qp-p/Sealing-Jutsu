@@ -7,6 +7,33 @@ This file lists the live LLM planner test cases used to evaluate whether the mem
 Live LLM Command
 python run_llm_experiment.py --provider ollama --models llama3,mistral,phi3 --repetitions 3 --output-csv results\live_llm_planner_suite.csv --summary-csv results\live_llm_planner_summary.csv --model-summary-csv results\live_llm_planner_model_summary.csv
 
+OpenAI Responses / Codex Live LLM Command
+What this is for: this is the paid API path for testing Codex-class OpenAI models as the planner. It uses the Responses API, strict JSON Schema output, and the same ambient_prompt versus capsule_filtered_prompt measurement used by the Ollama live suite.
+
+PowerShell command:
+cd C:\Users\User\Music\Agent-Poisoning-Research-FINAL
+$env:OPENAI_API_KEY="your_api_key"
+python run_llm_experiment.py --provider openai-responses --api-key-env OPENAI_API_KEY --models gpt-5.2-codex,gpt-5.1-codex --case-source high-cost --high-cost-attack-modes workflow_corpus,generated_holdout,adaptive_loop,advanced_attack_suite,attacker_generated --high-cost-seeds 2026,2027,2028 --high-cost-cases-per-mode-seed 20 --output-csv results\high_cost_openai_responses_suite.csv --summary-csv results\high_cost_openai_responses_summary.csv --model-summary-csv results\high_cost_openai_responses_model_summary.csv --audit-jsonl results\high_cost_openai_responses_audit.jsonl --statistics-csv results\high_cost_openai_responses_statistics.csv
+
+OpenAI Responses command scale:
+300 high-cost LLM cases x 2 planner conditions x 2 Codex models x 1 repetition = 1,200 live planner rows.
+
+OpenAI Responses output files:
+results\high_cost_openai_responses_suite.csv
+Every per-case planner row, including raw LLM output, parsed result, decision authorization result, parse status, model, case source, attack type, and seed.
+
+results\high_cost_openai_responses_summary.csv
+Aggregate results by planner condition.
+
+results\high_cost_openai_responses_model_summary.csv
+Aggregate results by model and condition. Use this for Codex per-model ASR, raw_parse_error_rate, and first_pass_valid_planner_rate.
+
+results\high_cost_openai_responses_audit.jsonl
+Raw output audit trail for reviewer inspection.
+
+results\high_cost_openai_responses_statistics.csv
+Paired ambient-versus-defended statistics, including absolute ASR reduction and McNemar-style significance approximation.
+
 Medium Workflow-Corpus Live LLM Command
 What this is for: this is the stronger medium-cost live benchmark. It replaces the tiny hand-written LLM case list with the workflow-corpus test split, while still using actual LLM planners across llama3, mistral, and phi3.
 
@@ -43,12 +70,14 @@ Condition-level raw parse error check:
 Import-Csv results\llm_check_summary.csv | Select-Object condition,raw_parse_error_rate | Format-Table -AutoSize
 
 Planner JSON Mode
-The Ollama live provider sends format=json with temperature 0, and the planner prompt asks for exactly one minified strict JSON object with only recommendation, action, and rationale. This is the deployment-style path. The repair path remains as a resilience fallback, not the normal mechanism.
+The Ollama live provider sends format=json with temperature 0, and the planner prompt asks for exactly one minified strict JSON object with only recommendation, action, and rationale. The OpenAI Responses provider sends text.format=json_schema with strict=true for the same three required fields. This is the deployment-style path. The repair path remains as a resilience fallback, not the normal mechanism.
 
 Models Tested
 llama3
 mistral
 phi3
+gpt-5.2-codex through openai-responses when an OPENAI_API_KEY is configured
+gpt-5.1-codex through openai-responses when an OPENAI_API_KEY is configured
 
 Planner Conditions Tested
 ambient_prompt
@@ -215,6 +244,9 @@ Fenced JSON inside prose.
 Capitalized JSON keys such as Recommendation, Action, and Rationale.
 Malformed or non-JSON LLM output.
 Invalid action strings falling back to safe answer action.
+OpenAI Responses API output_text extraction.
+OpenAI Responses API nested message.content output_text extraction.
+Strict JSON Schema request construction for paid Codex-class planners.
 Strict JSON retry for malformed planner outputs.
 Deterministic schema repair for almost-JSON outputs after failed retry.
 Retry drift recovery when a model's strict JSON retry turns into an unrelated object but the original output still contains a clear planner recommendation.

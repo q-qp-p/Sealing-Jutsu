@@ -199,6 +199,7 @@ LLM-provider experiment harness:
 ```bash
 python run_llm_experiment.py --provider local
 python run_llm_experiment.py --provider ollama --models llama3,mistral,phi3 --repetitions 3
+python run_llm_experiment.py --provider openai-responses --api-key-env OPENAI_API_KEY --models gpt-5.2-codex,gpt-5.1-codex --case-source workflow-corpus
 ```
 
 Medium live LLM workflow-corpus suite:
@@ -284,6 +285,26 @@ python run_llm_experiment.py \
 ```
 
 The high-cost profile writes a raw-output audit JSONL and a paired statistics CSV comparing ambient prompt exposure against capsule-filtered authorization.
+
+OpenAI Responses / Codex provider shape:
+
+```bash
+python run_llm_experiment.py \
+  --provider openai-responses \
+  --api-key-env OPENAI_API_KEY \
+  --models gpt-5.2-codex,gpt-5.1-codex \
+  --case-source high-cost \
+  --high-cost-attack-modes workflow_corpus,generated_holdout,adaptive_loop,advanced_attack_suite,attacker_generated \
+  --high-cost-seeds 2026,2027,2028 \
+  --high-cost-cases-per-mode-seed 20 \
+  --output-csv results/high_cost_openai_responses_suite.csv \
+  --summary-csv results/high_cost_openai_responses_summary.csv \
+  --model-summary-csv results/high_cost_openai_responses_model_summary.csv \
+  --audit-jsonl results/high_cost_openai_responses_audit.jsonl \
+  --statistics-csv results/high_cost_openai_responses_statistics.csv
+```
+
+This path uses OpenAI's Responses API with strict JSON Schema output for `recommendation`, `action`, and `rationale`. Use it for Codex-class API models when paid live-model evidence is needed; keep the raw-output audit JSONL for reviewer inspection.
 
 ## Testing
 

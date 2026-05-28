@@ -24,7 +24,7 @@ from capsule_guard.llm_experiment import (
     write_llm_suite_csv,
     write_llm_summary_csv,
 )
-from capsule_guard.llm_providers import OllamaGenerateProvider, OpenAICompatibleChatProvider
+from capsule_guard.llm_providers import OllamaGenerateProvider, OpenAICompatibleChatProvider, OpenAIResponsesProvider
 from capsule_guard.metrics import Metrics, table
 from capsule_guard.scenarios import generate_scenarios
 from capsule_guard.statistics import aggregate_metric_rows, write_summary_csv
@@ -120,7 +120,11 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Also run the LLM planner benchmark after the capsule sandbox benchmark.",
     )
-    parser.add_argument("--llm-provider", choices=("local", "ollama", "openai-compatible"), default="local")
+    parser.add_argument(
+        "--llm-provider",
+        choices=("local", "ollama", "openai-compatible", "openai-responses"),
+        default="local",
+    )
     parser.add_argument(
         "--llm-model",
         default=os.environ.get("CAPSULE_LLM_MODEL", ""),
@@ -326,6 +330,17 @@ def _llm_providers(args: argparse.Namespace):
         api_key = os.environ.get(args.llm_api_key_env, "")
         return {
             model_name: OpenAICompatibleChatProvider(
+                endpoint=args.llm_endpoint,
+                model=model_name,
+                api_key=api_key,
+                timeout_seconds=args.llm_timeout_seconds,
+            )
+            for model_name in model_names
+        }
+    if args.llm_provider == "openai-responses":
+        api_key = os.environ.get(args.llm_api_key_env, "")
+        return {
+            model_name: OpenAIResponsesProvider(
                 endpoint=args.llm_endpoint,
                 model=model_name,
                 api_key=api_key,
