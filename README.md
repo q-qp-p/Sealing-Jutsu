@@ -17,31 +17,37 @@
 
 ---
 
-## Research Claim
+## In One Sentence
 
-Sealing Jutsu does **not** claim to solve all agent memory poisoning.
+Sealing Jutsu is a research prototype that tests whether LLM-agent memory can be made safer by forcing every memory to prove what it is allowed to influence before it can shape a plan or trigger an action.
 
-It tests a narrower, defensible claim: persistent memory poisoning can be reduced when every retrieved memory must prove what it is authorized to influence before it can shape planning or trigger an action.
+## The Problem
 
-The project treats agent memory as a security boundary, not just a vector store.
+Long-term-memory agents are useful because they remember context across sessions. That same feature creates a quiet security problem: a malicious web page, OCR document, tool result, agent summary, or experience log can be saved today and retrieved later as if it were normal trusted memory.
 
-## Why This Exists
-
-Long-term-memory agents can be poisoned in one session and steered in another. A malicious web page, OCR document, tool result, agent summary, or experience log can be stored as memory and later retrieved as if it were normal user context.
-
-Most baseline defenses ask:
+Most simple defenses ask:
 
 > Does this memory look suspicious?
 
-Sealing Jutsu asks:
+This project asks a stricter question:
 
 > What is this memory allowed to influence?
 
-That shift is the core idea. A memory may be useful for recall while still being forbidden from authorizing recommendations, purchases, emails, file changes, or tool chains.
+That distinction matters. A memory can be useful for recall while still being forbidden from authorizing recommendations, purchases, emails, file changes, or tool chains.
+
+## The Claim
+
+Sealing Jutsu does **not** claim to solve all agent memory poisoning.
+
+It tests a narrower, defensible claim:
+
+> Persistent memory poisoning can be reduced when retrieved memories are treated as bounded security objects instead of plain context.
+
+In other words, memory should not automatically become planning authority.
 
 ## What It Builds
 
-The implementation compiles memory records into bounded capsules. Each capsule carries:
+The implementation turns raw memory records into intent-bound capsules. A capsule keeps the content, but it also carries security metadata that limits where that content is allowed to matter.
 
 | Capsule field | What it controls |
 |---|---|
@@ -55,7 +61,7 @@ The implementation compiles memory records into bounded capsules. Each capsule c
 | `lineage` | Whether derived memories can be traced back to their origin |
 | `status` | Whether the capsule is active or sealed |
 
-At decision time, the memory has to pass topic scope, authority floors, independent evidence quorum, temporal checks, lineage checks, and a final plan authorization gate.
+At decision time, retrieved memory has to pass topic scope, authority floors, independent evidence quorum, temporal checks, lineage checks, and a final plan authorization gate.
 
 ```text
 Raw memory
@@ -68,6 +74,15 @@ Raw memory
 ```
 
 ## Current Evidence
+
+The short version: baselines still get poisoned, but the capsule path blocks the final poisoned action in the tested benchmarks.
+
+| Evidence track | Main result |
+|---|---|
+| Workflow-corpus benchmark | Intent capsules: 0.00% attack success, 0.00% risky action, 100.00% benign accuracy |
+| Medium live LLM benchmark | Capsule-filtered prompt: 0.00% final attack success across llama3, mistral, and phi3 |
+| Gap-fixed rerun | Same 0.00% final attack success reproduced; planner temptation stayed at 2.78% |
+| Trace realism | Added `trace_corpus` importer so real or lab-collected agent traces can be evaluated without rewriting Python scenarios |
 
 Latest committed workflow-corpus test split:
 
@@ -147,6 +162,8 @@ Gap-closure comparison:
 | Final parse error | 0.00% | 0.00% | 0.00% | Closed |
 | Scenario realism | Generated workflow corpus | Added `trace_corpus` importer | Available | Code gap closed |
 | Real external traces | Not available | Import path ready | Still needs collected traces | Evidence gap remains |
+
+How to read this: the LLM can still be tempted internally, which is realistic. The safety goal is that unauthorized temptation does not become an accepted recommendation or tool action. In the gap-fixed medium run, every tempted defended plan was blocked before final action.
 
 ## What The Hardened Tests Cover
 
