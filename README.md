@@ -67,11 +67,6 @@ Raw memory
   -> Tool/action decision
 ```
 <p align="center">
-  <img src="assets/capsuleguard-architecture.svg" alt="CapsuleGuard architecture diagram — 7-layer intent-bound memory defense pipeline" width="100%">
-</p>
-
-
-<p align="center">
   <img src="assets/capsuleguard-architecture.svg" alt="CapsuleGuard architecture diagram" width="100%">
 </p>
 
