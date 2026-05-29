@@ -1,429 +1,237 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1860" width="1200" height="1860">
   <defs>
-    <style>
-      text { font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace; }
-      .title { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
-    </style>
-    <filter id="glow">
-      <feGaussianBlur stdDeviation="3.5" result="blur"/>
-      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-    </filter>
-    <filter id="glow-sm">
-      <feGaussianBlur stdDeviation="2" result="blur"/>
-      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-    </filter>
-    <filter id="shadow">
-      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#000" flood-opacity="0.5"/>
-    </filter>
-    <marker id="arr" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
-      <polygon points="0 0, 8 3, 0 6" fill="#00BCD4"/>
-    </marker>
-    <marker id="arr-red" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
-      <polygon points="0 0, 8 3, 0 6" fill="#EF5350"/>
-    </marker>
-    <marker id="arr-dim" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
-      <polygon points="0 0, 8 3, 0 6" fill="#455A64"/>
-    </marker>
-    <linearGradient id="bg-grad" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#0B0F1A"/>
-      <stop offset="100%" stop-color="#070B14"/>
-    </linearGradient>
-    <linearGradient id="gate-grad" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#061422"/>
-      <stop offset="100%" stop-color="#040E1A"/>
-    </linearGradient>
-    <linearGradient id="gate-border" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#00E5FF"/>
-      <stop offset="100%" stop-color="#006064"/>
-    </linearGradient>
-    <linearGradient id="title-line" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%" stop-color="#00BCD4"/>
-      <stop offset="60%" stop-color="#00BCD4" stop-opacity="0.3"/>
-      <stop offset="100%" stop-color="#00BCD4" stop-opacity="0"/>
-    </linearGradient>
-    <linearGradient id="metric-green" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#0A1F12"/>
-      <stop offset="100%" stop-color="#061510"/>
-    </linearGradient>
-    <linearGradient id="metric-red" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#1F0A0A"/>
-      <stop offset="100%" stop-color="#150606"/>
-    </linearGradient>
-    <linearGradient id="metric-blue" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#051520"/>
-      <stop offset="100%" stop-color="#030F18"/>
-    </linearGradient>
+    <style>.t{font-family:'Segoe UI',system-ui,-apple-system,sans-serif}</style>
+    <filter id="glow"><feGaussianBlur stdDeviation="3.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <filter id="sh"><feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#000" flood-opacity="0.5"/></filter>
+    <marker id="a" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#00BCD4"/></marker>
+    <marker id="ar" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#EF5350"/></marker>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0B0F1A"/><stop offset="100%" stop-color="#070B14"/></linearGradient>
+    <linearGradient id="gg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#061422"/><stop offset="100%" stop-color="#040E1A"/></linearGradient>
+    <linearGradient id="gb" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#00E5FF"/><stop offset="100%" stop-color="#006064"/></linearGradient>
+    <linearGradient id="tl" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#00BCD4"/><stop offset="60%" stop-color="#00BCD4" stop-opacity="0.3"/><stop offset="100%" stop-color="#00BCD4" stop-opacity="0"/></linearGradient>
+    <linearGradient id="mg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0A1F12"/><stop offset="100%" stop-color="#061510"/></linearGradient>
+    <linearGradient id="mr" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#1F0A0A"/><stop offset="100%" stop-color="#150606"/></linearGradient>
+    <linearGradient id="mb" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#051520"/><stop offset="100%" stop-color="#030F18"/></linearGradient>
   </defs>
 
-  <!-- ── Background ── -->
-  <rect width="1200" height="1860" fill="url(#bg-grad)"/>
+  <!-- Background -->
+  <rect width="1200" height="1860" fill="url(#bg)"/>
+  <rect x="0" y="0" width="1200" height="2" fill="url(#tl)"/>
+  <line x1="600" y1="100" x2="600" y2="1580" stroke="#00BCD4" stroke-width="0.5" stroke-opacity="0.06"/>
 
-  <!-- Top bar -->
-  <rect x="0" y="0" width="1200" height="2" fill="url(#title-line)"/>
+  <!-- HEADER -->
+  <rect x="32" y="24" width="580" height="2" fill="url(#tl)"/>
+  <text x="32" y="62" class="t" font-size="34" font-weight="800" fill="#FFF" letter-spacing="-1">Sealing Jutsu</text>
+  <text x="230" y="62" class="t" font-size="34" font-weight="300" fill="#00BCD4" letter-spacing="-1"> &#8212; CapsuleGuard</text>
+  <text x="32" y="86" class="t" font-size="12" fill="#455A64" letter-spacing="3.5">AGENT MEMORY POISONING DEFENSE &#xB7; PIPELINE ARCHITECTURE</text>
+  <rect x="856" y="34" width="144" height="22" rx="11" fill="#00BCD4" fill-opacity="0.08" stroke="#00BCD4" stroke-width="1" stroke-opacity="0.4"/>
+  <text x="928" y="49" class="t" font-size="10" fill="#4DD0E1" text-anchor="middle" letter-spacing="1">136 TESTS PASSING</text>
+  <rect x="1010" y="34" width="158" height="22" rx="11" fill="#4CAF50" fill-opacity="0.08" stroke="#4CAF50" stroke-width="1" stroke-opacity="0.4"/>
+  <text x="1089" y="49" class="t" font-size="10" fill="#81C784" text-anchor="middle" letter-spacing="1">0.00% HELD-OUT ASR</text>
 
-  <!-- Faint vertical track line -->
-  <line x1="600" y1="100" x2="600" y2="1620" stroke="#00BCD4" stroke-width="0.5" stroke-opacity="0.07"/>
+  <!-- LAYER 1: SEEDS -->
+  <text x="32" y="116" class="t" font-size="9" fill="#EF5350" letter-spacing="3" font-weight="700">LAYER 01 &#xB7; RAW MEMORY SEEDS &#xB7; UNTRUSTED ATTACK SURFACE</text>
+  <!-- 6 seed boxes -->
+  <rect x="32" y="126" width="183" height="52" rx="4" fill="#0F0808" stroke="#C84B31" stroke-width="1.2"/><rect x="32" y="126" width="3" height="52" rx="2" fill="#EF5350"/>
+  <text x="123" y="150" class="t" font-size="12" fill="#ECEFF1" text-anchor="middle" font-weight="600">Web Content</text><text x="123" y="168" class="t" font-size="10" fill="#546E7A" text-anchor="middle">crawled / injected</text>
+  <rect x="223" y="126" width="183" height="52" rx="4" fill="#0F0808" stroke="#C84B31" stroke-width="1.2"/><rect x="223" y="126" width="3" height="52" rx="2" fill="#EF5350"/>
+  <text x="314" y="150" class="t" font-size="12" fill="#ECEFF1" text-anchor="middle" font-weight="600">User Declared</text><text x="314" y="168" class="t" font-size="10" fill="#546E7A" text-anchor="middle">preferences / facts</text>
+  <rect x="414" y="126" width="183" height="52" rx="4" fill="#0F0808" stroke="#C84B31" stroke-width="1.2"/><rect x="414" y="126" width="3" height="52" rx="2" fill="#EF5350"/>
+  <text x="505" y="150" class="t" font-size="12" fill="#ECEFF1" text-anchor="middle" font-weight="600">Tool Output</text><text x="505" y="168" class="t" font-size="10" fill="#546E7A" text-anchor="middle">browser / API results</text>
+  <rect x="605" y="126" width="183" height="52" rx="4" fill="#0F0808" stroke="#C84B31" stroke-width="1.2"/><rect x="605" y="126" width="3" height="52" rx="2" fill="#EF5350"/>
+  <text x="696" y="150" class="t" font-size="12" fill="#ECEFF1" text-anchor="middle" font-weight="600">Agent Derived</text><text x="696" y="168" class="t" font-size="10" fill="#546E7A" text-anchor="middle">summaries / lineage</text>
+  <rect x="796" y="126" width="183" height="52" rx="4" fill="#0F0808" stroke="#C84B31" stroke-width="1.2"/><rect x="796" y="126" width="3" height="52" rx="2" fill="#EF5350"/>
+  <text x="887" y="150" class="t" font-size="12" fill="#ECEFF1" text-anchor="middle" font-weight="600">Experience Log</text><text x="887" y="168" class="t" font-size="10" fill="#546E7A" text-anchor="middle">cross-session memory</text>
+  <rect x="987" y="126" width="181" height="52" rx="4" fill="#0F0808" stroke="#C84B31" stroke-width="1.2"/><rect x="987" y="126" width="3" height="52" rx="2" fill="#EF5350"/>
+  <text x="1077" y="150" class="t" font-size="12" fill="#ECEFF1" text-anchor="middle" font-weight="600">OCR / Multimodal</text><text x="1077" y="168" class="t" font-size="10" fill="#546E7A" text-anchor="middle">image-extracted text</text>
+  <!-- Arrow -->
+  <line x1="600" y1="180" x2="600" y2="210" stroke="#00BCD4" stroke-width="1.5" stroke-dasharray="3,3" marker-end="url(#a)"/>
+  <rect x="534" y="191" width="90" height="16" rx="3" fill="#0B0F1A"/><text x="579" y="202" class="t" font-size="10" fill="#455A64" text-anchor="middle" font-style="italic">MemorySeed</text>
 
-  <!-- ── HEADER ── -->
-  <rect x="32" y="24" width="600" height="2" fill="url(#title-line)"/>
-  <text x="32" y="62" class="title" font-size="34" font-weight="800" fill="#FFFFFF" letter-spacing="-1">Sealing Jutsu</text>
-  <text x="228" y="62" class="title" font-size="34" font-weight="300" fill="#00BCD4" letter-spacing="-1"> — CapsuleGuard</text>
-  <text x="32" y="86" class="title" font-size="13" fill="#455A64" letter-spacing="3.5" font-weight="500">AGENT MEMORY POISONING DEFENSE · ARCHITECTURE</text>
+  <!-- LAYER 2: COMPILER -->
+  <text x="32" y="228" class="t" font-size="9" fill="#78909C" letter-spacing="3" font-weight="700">LAYER 02 &#xB7; CAPSULE COMPILER</text>
+  <rect x="32" y="238" width="1136" height="96" rx="5" fill="#0A1520" stroke="#263238" stroke-width="1.5" filter="url(#sh)"/>
+  <rect x="32" y="238" width="1136" height="3" rx="2" fill="#37474F"/>
+  <text x="56" y="262" class="t" font-size="14" fill="#ECEFF1" font-weight="700">Capsule Compiler</text>
+  <text x="56" y="280" class="t" font-size="10" fill="#455A64">Attaches security metadata to every raw seed before storage</text>
+  <!-- Field pills row 1 -->
+  <rect x="56" y="289" width="112" height="18" rx="9" fill="#0D1E2E" stroke="#1E3A4A" stroke-width="1"/><text x="112" y="301" class="t" font-size="10" fill="#4DD0E1" text-anchor="middle">source_type</text>
+  <rect x="178" y="289" width="72" height="18" rx="9" fill="#0D1E2E" stroke="#1E3A4A" stroke-width="1"/><text x="214" y="301" class="t" font-size="10" fill="#4DD0E1" text-anchor="middle">kind</text>
+  <rect x="260" y="289" width="126" height="18" rx="9" fill="#0D1E2E" stroke="#1E3A4A" stroke-width="1"/><text x="323" y="301" class="t" font-size="10" fill="#4DD0E1" text-anchor="middle">allowed_topics</text>
+  <rect x="396" y="289" width="122" height="18" rx="9" fill="#1A0808" stroke="#4A1A1A" stroke-width="1"/><text x="457" y="301" class="t" font-size="10" fill="#EF9A9A" text-anchor="middle">denied_actions</text>
+  <rect x="528" y="289" width="140" height="18" rx="9" fill="#0D1E2E" stroke="#1E3A4A" stroke-width="1"/><text x="598" y="301" class="t" font-size="10" fill="#4DD0E1" text-anchor="middle">source_authority</text>
+  <rect x="678" y="289" width="140" height="18" rx="9" fill="#0D1E2E" stroke="#1E3A4A" stroke-width="1"/><text x="748" y="301" class="t" font-size="10" fill="#4DD0E1" text-anchor="middle">influence_budget</text>
+  <rect x="828" y="289" width="154" height="18" rx="9" fill="#0D1E2E" stroke="#1E3A4A" stroke-width="1"/><text x="905" y="301" class="t" font-size="10" fill="#4DD0E1" text-anchor="middle">verification_count</text>
+  <rect x="992" y="289" width="80" height="18" rx="9" fill="#0D1E2E" stroke="#1E3A4A" stroke-width="1"/><text x="1032" y="301" class="t" font-size="10" fill="#4DD0E1" text-anchor="middle">lineage</text>
+  <rect x="1082" y="289" width="68" height="18" rx="9" fill="#0A1A0E" stroke="#1A3A20" stroke-width="1"/><text x="1116" y="301" class="t" font-size="10" fill="#A5D6A7" text-anchor="middle">status</text>
+  <!-- Arrow -->
+  <line x1="600" y1="336" x2="600" y2="366" stroke="#00BCD4" stroke-width="1.5" stroke-dasharray="3,3" marker-end="url(#a)"/>
+  <rect x="516" y="347" width="168" height="16" rx="3" fill="#0B0F1A"/><text x="600" y="358" class="t" font-size="10" fill="#455A64" text-anchor="middle" font-style="italic">MemoryCapsule{ ... }</text>
 
-  <!-- Badge row -->
-  <rect x="860" y="34" width="138" height="22" rx="11" fill="#00BCD4" fill-opacity="0.08" stroke="#00BCD4" stroke-width="1" stroke-opacity="0.35"/>
-  <text x="929" y="49" class="title" font-size="10" fill="#4DD0E1" text-anchor="middle" letter-spacing="1">136 TESTS PASSING</text>
+  <!-- LAYER 3: STORE -->
+  <text x="32" y="384" class="t" font-size="9" fill="#78909C" letter-spacing="3" font-weight="700">LAYER 03 &#xB7; CAPSULE STORE</text>
+  <rect x="32" y="394" width="1136" height="62" rx="5" fill="#0A1520" stroke="#263238" stroke-width="1.5"/>
+  <rect x="32" y="394" width="1136" height="3" rx="2" fill="#37474F"/>
+  <text x="56" y="418" class="t" font-size="14" fill="#ECEFF1" font-weight="700">Capsule Store</text>
+  <text x="56" y="441" class="t" font-size="10" fill="#455A64">Persists compiled capsules &#xB7; retrieves top-k candidates per UserIntent</text>
+  <rect x="470" y="406" width="120" height="22" rx="3" fill="#0D1E2E" stroke="#1E3A4A" stroke-width="1"/><text x="530" y="421" class="t" font-size="11" fill="#4DD0E1" text-anchor="middle">lexical retrieval</text>
+  <rect x="614" y="406" width="120" height="22" rx="3" fill="#0D1E2E" stroke="#1E3A4A" stroke-width="1"/><text x="674" y="421" class="t" font-size="11" fill="#4DD0E1" text-anchor="middle">vector retrieval</text>
+  <text x="760" y="421" class="t" font-size="10" fill="#37474F">  k=5 &#xB7; ACTIVE + SEALED status</text>
+  <!-- Arrow -->
+  <line x1="600" y1="458" x2="600" y2="496" stroke="#00BCD4" stroke-width="2" marker-end="url(#a)"/>
+  <rect x="516" y="469" width="168" height="16" rx="3" fill="#0B0F1A"/><text x="600" y="480" class="t" font-size="10" fill="#455A64" text-anchor="middle" font-style="italic">retrieve(intent, k=5)</text>
 
-  <rect x="1008" y="34" width="160" height="22" rx="11" fill="#4CAF50" fill-opacity="0.08" stroke="#4CAF50" stroke-width="1" stroke-opacity="0.35"/>
-  <text x="1088" y="49" class="title" font-size="10" fill="#81C784" text-anchor="middle" letter-spacing="1">0.00% HELD-OUT ASR</text>
+  <!-- LAYER 4: POLICY + GATES (DEFENSE CORE) -->
+  <text x="32" y="512" class="t" font-size="9" fill="#00BCD4" letter-spacing="3" font-weight="700">LAYER 04 &#xB7; POLICY &amp; GATE LAYER &#xB7; DEFENSE CORE</text>
+  <rect x="24" y="522" width="1152" height="368" rx="8" fill="none" stroke="#00BCD4" stroke-width="1.5" stroke-opacity="0.2" filter="url(#glow)"/>
+  <rect x="28" y="526" width="1144" height="360" rx="7" fill="url(#gg)" stroke="url(#gb)" stroke-width="2"/>
+  <rect x="28" y="526" width="1144" height="36" rx="7" fill="#00BCD4" fill-opacity="0.07"/>
+  <text x="50" y="550" class="t" font-size="10" fill="#00BCD4" letter-spacing="2.5" font-weight="700">POLICY &amp; GATE LAYER</text>
+  <text x="600" y="550" class="t" font-size="11" fill="#4DD0E1" text-anchor="middle" font-weight="600">&#9658; Every retrieved capsule must pass all four gates &#9668;</text>
+  <text x="1156" y="550" class="t" font-size="10" fill="#00838F" text-anchor="end">CapsulePolicy &#xB7; PlanAuthorizationGate &#xB7; EvidenceQuorumGate</text>
+  <!-- Gate 1 -->
+  <rect x="48" y="572" width="1104" height="60" rx="4" fill="#040D18" stroke="#0D2030" stroke-width="1"/>
+  <rect x="48" y="572" width="4" height="60" rx="2" fill="#00E5FF"/>
+  <text x="72" y="594" class="t" font-size="10" fill="#00BCD4" letter-spacing="2" font-weight="700">G1</text>
+  <text x="106" y="594" class="t" font-size="13" fill="#ECEFF1" font-weight="700">Topic Scope Authorization</text>
+  <text x="1140" y="594" class="t" font-size="10" fill="#37474F" text-anchor="end">CapsulePolicy.trace()</text>
+  <text x="72" y="615" class="t" font-size="11" fill="#546E7A">Jaccard( intent.topics, capsule.allowed_topics ) &#x2265; 0.12 &#xB7; rejects memories outside the query topic domain</text>
+  <!-- Gate 2 -->
+  <rect x="48" y="640" width="1104" height="60" rx="4" fill="#040D18" stroke="#0D2030" stroke-width="1"/>
+  <rect x="48" y="640" width="4" height="60" rx="2" fill="#00ACC1"/>
+  <text x="72" y="662" class="t" font-size="10" fill="#00BCD4" letter-spacing="2" font-weight="700">G2</text>
+  <text x="106" y="662" class="t" font-size="13" fill="#ECEFF1" font-weight="700">Authority Floor Check</text>
+  <text x="1140" y="662" class="t" font-size="10" fill="#37474F" text-anchor="end">rules.authorize_capsule_for_intent()</text>
+  <text x="72" y="683" class="t" font-size="11" fill="#546E7A">source_authority &#x2265; floor &#xB7; denied_actions enforcement &#xB7; source_attested validation &#xB7; lineage depth limits</text>
+  <!-- Gate 3 -->
+  <rect x="48" y="708" width="1104" height="60" rx="4" fill="#040D18" stroke="#0D2030" stroke-width="1"/>
+  <rect x="48" y="708" width="4" height="60" rx="2" fill="#0097A7"/>
+  <text x="72" y="730" class="t" font-size="10" fill="#00BCD4" letter-spacing="2" font-weight="700">G3</text>
+  <text x="106" y="730" class="t" font-size="13" fill="#ECEFF1" font-weight="700">Evidence Quorum Gate</text>
+  <text x="1140" y="730" class="t" font-size="10" fill="#37474F" text-anchor="end">EvidenceQuorumGate.allowed()</text>
+  <text x="72" y="751" class="t" font-size="11" fill="#546E7A">source_count &#x2265; 2 &#xB7; writer_count &#x2265; 2 &#xB7; fresh_verified &#x2265; 2 &#xB7; budget &#x2265; 0.70 (medium) / 1.60 (high)</text>
+  <!-- Gate 4 -->
+  <rect x="48" y="776" width="1104" height="60" rx="4" fill="#040D18" stroke="#0D2030" stroke-width="1"/>
+  <rect x="48" y="776" width="4" height="60" rx="2" fill="#00838F"/>
+  <text x="72" y="798" class="t" font-size="10" fill="#00BCD4" letter-spacing="2" font-weight="700">G4</text>
+  <text x="106" y="798" class="t" font-size="13" fill="#ECEFF1" font-weight="700">Plan Authorization Gate</text>
+  <text x="1140" y="798" class="t" font-size="10" fill="#37474F" text-anchor="end">PlanAuthorizationGate.allowed()</text>
+  <text x="72" y="819" class="t" font-size="11" fill="#546E7A">LOW &#x2192; pass &#xB7; MEDIUM &#x2192; approved rec + fresh authority &#xB7; HIGH &#x2192; independent verified quorum required</text>
+  <!-- Blocked exit arrow -->
+  <line x1="1172" y1="648" x2="1172" y2="778" stroke="#EF5350" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#ar)"/>
+  <text x="1186" y="718" class="t" font-size="10" fill="#EF5350" transform="rotate(90,1186,718)" text-anchor="middle">BLOCKED &#x2192; audit log</text>
+  <!-- Arrow down -->
+  <line x1="600" y1="888" x2="600" y2="924" stroke="#00BCD4" stroke-width="2" marker-end="url(#a)"/>
+  <rect x="516" y="900" width="168" height="16" rx="3" fill="#0B0F1A"/><text x="600" y="911" class="t" font-size="10" fill="#455A64" text-anchor="middle" font-style="italic">eligible capsules</text>
 
-  <!-- ════════════════════════════════════════ LAYER 1: INPUT ════ -->
-  <text x="32" y="118" class="title" font-size="9" fill="#EF5350" letter-spacing="3" font-weight="700">LAYER 01 · RAW MEMORY SEEDS · UNTRUSTED ATTACK SURFACE</text>
-
-  <!-- Seed boxes: 6 across -->
-  <!-- Row spacing: x positions: 32, 225, 418, 611, 804, 965 -->
-  <!-- widths: 185 each, gap 8 -->
-
-  <!-- Web Content -->
-  <rect x="32" y="128" width="183" height="52" rx="4" fill="#0F0808" stroke="#C84B31" stroke-width="1.2"/>
-  <rect x="32" y="128" width="3" height="52" rx="2" fill="#EF5350"/>
-  <text x="123" y="152" class="title" font-size="12" fill="#ECEFF1" text-anchor="middle" font-weight="600">Web Content</text>
-  <text x="123" y="170" class="title" font-size="10" fill="#546E7A" text-anchor="middle">crawled / injected pages</text>
-
-  <!-- User Declared -->
-  <rect x="223" y="128" width="183" height="52" rx="4" fill="#0F0808" stroke="#C84B31" stroke-width="1.2"/>
-  <rect x="223" y="128" width="3" height="52" rx="2" fill="#EF5350"/>
-  <text x="314" y="152" class="title" font-size="12" fill="#ECEFF1" text-anchor="middle" font-weight="600">User Declared</text>
-  <text x="314" y="170" class="title" font-size="10" fill="#546E7A" text-anchor="middle">preferences / facts</text>
-
-  <!-- Tool Output -->
-  <rect x="414" y="128" width="183" height="52" rx="4" fill="#0F0808" stroke="#C84B31" stroke-width="1.2"/>
-  <rect x="414" y="128" width="3" height="52" rx="2" fill="#EF5350"/>
-  <text x="505" y="152" class="title" font-size="12" fill="#ECEFF1" text-anchor="middle" font-weight="600">Tool Output</text>
-  <text x="505" y="170" class="title" font-size="10" fill="#546E7A" text-anchor="middle">browser / API results</text>
-
-  <!-- Agent Derived -->
-  <rect x="605" y="128" width="183" height="52" rx="4" fill="#0F0808" stroke="#C84B31" stroke-width="1.2"/>
-  <rect x="605" y="128" width="3" height="52" rx="2" fill="#EF5350"/>
-  <text x="696" y="152" class="title" font-size="12" fill="#ECEFF1" text-anchor="middle" font-weight="600">Agent Derived</text>
-  <text x="696" y="170" class="title" font-size="10" fill="#546E7A" text-anchor="middle">summaries / lineage</text>
-
-  <!-- Experience Log -->
-  <rect x="796" y="128" width="183" height="52" rx="4" fill="#0F0808" stroke="#C84B31" stroke-width="1.2"/>
-  <rect x="796" y="128" width="3" height="52" rx="2" fill="#EF5350"/>
-  <text x="887" y="152" class="title" font-size="12" fill="#ECEFF1" text-anchor="middle" font-weight="600">Experience Log</text>
-  <text x="887" y="170" class="title" font-size="10" fill="#546E7A" text-anchor="middle">cross-session memory</text>
-
-  <!-- OCR / Multimodal -->
-  <rect x="987" y="128" width="181" height="52" rx="4" fill="#0F0808" stroke="#C84B31" stroke-width="1.2"/>
-  <rect x="987" y="128" width="3" height="52" rx="2" fill="#EF5350"/>
-  <text x="1077" y="152" class="title" font-size="12" fill="#ECEFF1" text-anchor="middle" font-weight="600">OCR / Multimodal</text>
-  <text x="1077" y="170" class="title" font-size="10" fill="#546E7A" text-anchor="middle">image-extracted text</text>
-
-  <!-- Connector: seeds → compiler -->
-  <line x1="600" y1="182" x2="600" y2="212" stroke="#00BCD4" stroke-width="1.5" stroke-dasharray="3,3" marker-end="url(#arr)"/>
-  <rect x="534" y="193" width="90" height="16" rx="3" fill="#0B0F1A"/>
-  <text x="579" y="204" class="title" font-size="10" fill="#455A64" text-anchor="middle" font-style="italic">MemorySeed</text>
-
-  <!-- ════════════════════════════════════════ LAYER 2: COMPILER ════ -->
-  <text x="32" y="230" class="title" font-size="9" fill="#78909C" letter-spacing="3" font-weight="700">LAYER 02 · CAPSULE COMPILER</text>
-
-  <rect x="32" y="240" width="1136" height="96" rx="5" fill="#0A1520" stroke="#263238" stroke-width="1.5" filter="url(#shadow)"/>
-  <rect x="32" y="240" width="1136" height="3" rx="2" fill="#37474F"/>
-
-  <text x="56" y="264" class="title" font-size="14" fill="#ECEFF1" font-weight="700">Capsule Compiler</text>
-  <text x="56" y="282" class="title" font-size="10" fill="#455A64">Attaches security metadata to every raw seed before storage</text>
-
-  <!-- Field pills -->
-  <!-- Row 1 -->
-  <rect x="56" y="291" width="112" height="18" rx="9" fill="#0D1E2E" stroke="#1E3A4A" stroke-width="1"/>
-  <text x="112" y="303" class="title" font-size="10" fill="#4DD0E1" text-anchor="middle">source_type</text>
-
-  <rect x="178" y="291" width="72" height="18" rx="9" fill="#0D1E2E" stroke="#1E3A4A" stroke-width="1"/>
-  <text x="214" y="303" class="title" font-size="10" fill="#4DD0E1" text-anchor="middle">kind</text>
-
-  <rect x="260" y="291" width="126" height="18" rx="9" fill="#0D1E2E" stroke="#1E3A4A" stroke-width="1"/>
-  <text x="323" y="303" class="title" font-size="10" fill="#4DD0E1" text-anchor="middle">allowed_topics</text>
-
-  <rect x="396" y="291" width="122" height="18" rx="9" fill="#1A0808" stroke="#4A1A1A" stroke-width="1"/>
-  <text x="457" y="303" class="title" font-size="10" fill="#EF9A9A" text-anchor="middle">denied_actions</text>
-
-  <rect x="528" y="291" width="140" height="18" rx="9" fill="#0D1E2E" stroke="#1E3A4A" stroke-width="1"/>
-  <text x="598" y="303" class="title" font-size="10" fill="#4DD0E1" text-anchor="middle">source_authority</text>
-
-  <rect x="678" y="291" width="140" height="18" rx="9" fill="#0D1E2E" stroke="#1E3A4A" stroke-width="1"/>
-  <text x="748" y="303" class="title" font-size="10" fill="#4DD0E1" text-anchor="middle">influence_budget</text>
-
-  <rect x="828" y="291" width="154" height="18" rx="9" fill="#0D1E2E" stroke="#1E3A4A" stroke-width="1"/>
-  <text x="905" y="303" class="title" font-size="10" fill="#4DD0E1" text-anchor="middle">verification_count</text>
-
-  <rect x="992" y="291" width="80" height="18" rx="9" fill="#0D1E2E" stroke="#1E3A4A" stroke-width="1"/>
-  <text x="1032" y="303" class="title" font-size="10" fill="#4DD0E1" text-anchor="middle">lineage</text>
-
-  <rect x="1082" y="291" width="68" height="18" rx="9" fill="#0A1A0E" stroke="#1A3A20" stroke-width="1"/>
-  <text x="1116" y="303" class="title" font-size="10" fill="#A5D6A7" text-anchor="middle">status</text>
-
-  <!-- Connector: compiler → store -->
-  <line x1="600" y1="338" x2="600" y2="368" stroke="#00BCD4" stroke-width="1.5" stroke-dasharray="3,3" marker-end="url(#arr)"/>
-  <rect x="516" y="349" width="168" height="16" rx="3" fill="#0B0F1A"/>
-  <text x="600" y="360" class="title" font-size="10" fill="#455A64" text-anchor="middle" font-style="italic">MemoryCapsule{ ... }</text>
-
-  <!-- ════════════════════════════════════════ LAYER 3: STORE ════ -->
-  <text x="32" y="386" class="title" font-size="9" fill="#78909C" letter-spacing="3" font-weight="700">LAYER 03 · CAPSULE STORE</text>
-
-  <rect x="32" y="396" width="1136" height="62" rx="5" fill="#0A1520" stroke="#263238" stroke-width="1.5"/>
-  <rect x="32" y="396" width="1136" height="3" rx="2" fill="#37474F"/>
-
-  <text x="56" y="420" class="title" font-size="14" fill="#ECEFF1" font-weight="700">Capsule Store</text>
-  <text x="56" y="443" class="title" font-size="10" fill="#455A64">Persists compiled capsules · retrieves top-k candidates per UserIntent</text>
-
-  <rect x="470" y="408" width="120" height="22" rx="3" fill="#0D1E2E" stroke="#1E3A4A" stroke-width="1"/>
-  <text x="530" y="423" class="title" font-size="11" fill="#4DD0E1" text-anchor="middle">lexical retrieval</text>
-
-  <rect x="600" y="408" width="4" height="22" fill="#1E3A4A"/>
-
-  <rect x="614" y="408" width="120" height="22" rx="3" fill="#0D1E2E" stroke="#1E3A4A" stroke-width="1"/>
-  <text x="674" y="423" class="title" font-size="11" fill="#4DD0E1" text-anchor="middle">vector retrieval</text>
-
-  <text x="760" y="423" class="title" font-size="10" fill="#37474F">  ·  k=5 candidates  ·  ACTIVE + SEALED status</text>
-
-  <!-- Connector: store → policy layer -->
-  <line x1="600" y1="460" x2="600" y2="498" stroke="#00BCD4" stroke-width="2" marker-end="url(#arr)"/>
-  <rect x="516" y="471" width="168" height="16" rx="3" fill="#0B0F1A"/>
-  <text x="600" y="482" class="title" font-size="10" fill="#455A64" text-anchor="middle" font-style="italic">retrieve(intent, k=5)</text>
-
-  <!-- ════════════════════════════════════════ LAYER 4: POLICY & GATES ════ -->
-  <text x="32" y="514" class="title" font-size="9" fill="#00BCD4" letter-spacing="3" font-weight="700">LAYER 04 · POLICY &amp; GATE LAYER · DEFENSE CORE</text>
-
-  <!-- Outer glow rect -->
-  <rect x="24" y="524" width="1152" height="368" rx="8" fill="none" stroke="#00BCD4" stroke-width="1.5" stroke-opacity="0.2" filter="url(#glow)"/>
-  <!-- Main border rect -->
-  <rect x="28" y="528" width="1144" height="360" rx="7" fill="url(#gate-grad)" stroke="url(#gate-border)" stroke-width="2"/>
-  <!-- Header bar inside -->
-  <rect x="28" y="528" width="1144" height="36" rx="7" fill="#00BCD4" fill-opacity="0.07"/>
-  <rect x="28" y="550" width="1144" height="14" fill="#00BCD4" fill-opacity="0.04"/>
-
-  <text x="50" y="552" class="title" font-size="10" fill="#00BCD4" letter-spacing="2.5" font-weight="700">POLICY &amp; GATE LAYER</text>
-  <text x="600" y="552" class="title" font-size="11" fill="#4DD0E1" text-anchor="middle" font-weight="600">▸  Every retrieved capsule must pass all four gates  ◂</text>
-  <text x="1156" y="552" class="title" font-size="10" fill="#00838F" text-anchor="end">CapsulePolicy · PlanAuthorizationGate · EvidenceQuorumGate</text>
-
-  <!-- GATE 1 -->
-  <rect x="48" y="574" width="1104" height="60" rx="4" fill="#040D18" stroke="#0D2030" stroke-width="1"/>
-  <rect x="48" y="574" width="4" height="60" rx="2" fill="#00E5FF"/>
-  <text x="72" y="596" class="title" font-size="10" fill="#00BCD4" letter-spacing="2" font-weight="700">G1</text>
-  <text x="106" y="596" class="title" font-size="13" fill="#ECEFF1" font-weight="700">Topic Scope Authorization</text>
-  <text x="1140" y="596" class="title" font-size="10" fill="#37474F" text-anchor="end">CapsulePolicy.trace()</text>
-  <text x="72" y="617" class="title" font-size="11" fill="#546E7A">Jaccard( intent.topics, capsule.allowed_topics ) ≥ 0.12 · rejects memories outside the query's topic domain</text>
-
-  <!-- GATE 2 -->
-  <rect x="48" y="642" width="1104" height="60" rx="4" fill="#040D18" stroke="#0D2030" stroke-width="1"/>
-  <rect x="48" y="642" width="4" height="60" rx="2" fill="#00ACC1"/>
-  <text x="72" y="664" class="title" font-size="10" fill="#00BCD4" letter-spacing="2" font-weight="700">G2</text>
-  <text x="106" y="664" class="title" font-size="13" fill="#ECEFF1" font-weight="700">Authority Floor Check</text>
-  <text x="1140" y="664" class="title" font-size="10" fill="#37474F" text-anchor="end">rules.authorize_capsule_for_intent()</text>
-  <text x="72" y="685" class="title" font-size="11" fill="#546E7A">source_authority ≥ floor · denied_actions enforcement · source_attested validation · lineage depth limits</text>
-
-  <!-- GATE 3 -->
-  <rect x="48" y="710" width="1104" height="60" rx="4" fill="#040D18" stroke="#0D2030" stroke-width="1"/>
-  <rect x="48" y="710" width="4" height="60" rx="2" fill="#0097A7"/>
-  <text x="72" y="732" class="title" font-size="10" fill="#00BCD4" letter-spacing="2" font-weight="700">G3</text>
-  <text x="106" y="732" class="title" font-size="13" fill="#ECEFF1" font-weight="700">Evidence Quorum Gate</text>
-  <text x="1140" y="732" class="title" font-size="10" fill="#37474F" text-anchor="end">EvidenceQuorumGate.allowed()</text>
-  <text x="72" y="753" class="title" font-size="11" fill="#546E7A">source_count ≥ 2 · writer_count ≥ 2 · fresh_verified ≥ 2 · influence_budget ≥ 0.70 (medium) / 1.60 (high)</text>
-
-  <!-- GATE 4 -->
-  <rect x="48" y="778" width="1104" height="60" rx="4" fill="#040D18" stroke="#0D2030" stroke-width="1"/>
-  <rect x="48" y="778" width="4" height="60" rx="2" fill="#00838F"/>
-  <text x="72" y="800" class="title" font-size="10" fill="#00BCD4" letter-spacing="2" font-weight="700">G4</text>
-  <text x="106" y="800" class="title" font-size="13" fill="#ECEFF1" font-weight="700">Plan Authorization Gate</text>
-  <text x="1140" y="800" class="title" font-size="10" fill="#37474F" text-anchor="end">PlanAuthorizationGate.allowed()</text>
-  <text x="72" y="821" class="title" font-size="11" fill="#546E7A">LOW risk → pass · MEDIUM → approved recommendation + fresh authority · HIGH → independent verified quorum required</text>
-
-  <!-- BLOCKED exit — right side -->
-  <line x1="1172" y1="650" x2="1172" y2="780" stroke="#EF5350" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arr-red)"/>
-  <rect x="1160" y="700" width="0" height="0"/>
-  <!-- Blocked label vertical -->
-  <text x="1186" y="720" class="title" font-size="10" fill="#EF5350" transform="rotate(90,1186,720)" text-anchor="middle">BLOCKED → audit log</text>
-
-  <!-- Connector: gates → planners -->
-  <line x1="600" y1="890" x2="600" y2="926" stroke="#00BCD4" stroke-width="2" marker-end="url(#arr)"/>
-  <rect x="516" y="902" width="168" height="16" rx="3" fill="#0B0F1A"/>
-  <text x="600" y="913" class="title" font-size="10" fill="#455A64" text-anchor="middle" font-style="italic">eligible capsules</text>
-
-  <!-- ════════════════════════════════════════ LAYER 5: PLANNERS ════ -->
-  <text x="32" y="942" class="title" font-size="9" fill="#78909C" letter-spacing="3" font-weight="700">LAYER 05 · PLANNER</text>
-
-  <!-- Ambient (baseline) -->
-  <rect x="32" y="952" width="364" height="118" rx="5" fill="#0A1016" stroke="#263238" stroke-width="1.5"/>
-  <rect x="32" y="952" width="364" height="3" rx="2" fill="#455A64"/>
-  <text x="214" y="976" class="title" font-size="13" fill="#78909C" text-anchor="middle" font-weight="700">AmbientPlanner</text>
-  <text x="214" y="994" class="title" font-size="10" fill="#37474F" text-anchor="middle">baseline · no policy enforcement</text>
-  <text x="214" y="1012" class="title" font-size="10" fill="#455A64" text-anchor="middle">Jaccard-strongest capsule wins</text>
-  <line x1="56" y1="1024" x2="372" y2="1024" stroke="#263238" stroke-width="1"/>
-  <text x="140" y="1042" class="title" font-size="11" fill="#EF5350" text-anchor="middle" font-weight="600">ASR 33.33%</text>
-  <text x="290" y="1042" class="title" font-size="11" fill="#546E7A" text-anchor="middle">benign 100%</text>
-  <text x="214" y="1060" class="title" font-size="9" fill="#37474F" text-anchor="middle" font-style="italic">comparison baseline</text>
-
-  <!-- CapsulePlanner (center, hero) -->
-  <rect x="418" y="952" width="364" height="118" rx="5" fill="#041828" stroke="#00BCD4" stroke-width="2" filter="url(#shadow)"/>
-  <rect x="418" y="952" width="364" height="3" rx="2" fill="#00BCD4"/>
-  <text x="600" y="976" class="title" font-size="13" fill="#FFFFFF" text-anchor="middle" font-weight="700">CapsulePlanner</text>
-  <text x="600" y="994" class="title" font-size="10" fill="#4DD0E1" text-anchor="middle">symbolic · intent-bound · policy enforced</text>
-  <text x="600" y="1012" class="title" font-size="10" fill="#546E7A" text-anchor="middle">majority_recommendation() on eligible capsules</text>
-  <line x1="442" y1="1024" x2="758" y2="1024" stroke="#1E3A4A" stroke-width="1"/>
-  <text x="526" y="1042" class="title" font-size="11" fill="#4CAF50" text-anchor="middle" font-weight="700">ASR 0.00%</text>
-  <text x="676" y="1042" class="title" font-size="11" fill="#4CAF50" text-anchor="middle" font-weight="700">benign 100%</text>
-  <text x="600" y="1060" class="title" font-size="9" fill="#00838F" text-anchor="middle" font-style="italic">primary defended path</text>
-
+  <!-- LAYER 5: PLANNERS -->
+  <text x="32" y="940" class="t" font-size="9" fill="#78909C" letter-spacing="3" font-weight="700">LAYER 05 &#xB7; PLANNER</text>
+  <!-- Ambient -->
+  <rect x="32" y="950" width="364" height="118" rx="5" fill="#0A1016" stroke="#263238" stroke-width="1.5"/>
+  <rect x="32" y="950" width="364" height="3" rx="2" fill="#455A64"/>
+  <text x="214" y="974" class="t" font-size="13" fill="#78909C" text-anchor="middle" font-weight="700">AmbientPlanner</text>
+  <text x="214" y="992" class="t" font-size="10" fill="#37474F" text-anchor="middle">baseline &#xB7; no policy enforcement</text>
+  <text x="214" y="1010" class="t" font-size="10" fill="#455A64" text-anchor="middle">Jaccard-strongest capsule wins</text>
+  <line x1="56" y1="1022" x2="372" y2="1022" stroke="#263238" stroke-width="1"/>
+  <text x="140" y="1040" class="t" font-size="11" fill="#EF5350" text-anchor="middle" font-weight="600">ASR 33.33%</text>
+  <text x="290" y="1040" class="t" font-size="11" fill="#546E7A" text-anchor="middle">benign 100%</text>
+  <text x="214" y="1058" class="t" font-size="9" fill="#37474F" text-anchor="middle" font-style="italic">comparison baseline</text>
+  <!-- CapsulePlanner -->
+  <rect x="418" y="950" width="364" height="118" rx="5" fill="#041828" stroke="#00BCD4" stroke-width="2" filter="url(#sh)"/>
+  <rect x="418" y="950" width="364" height="3" rx="2" fill="#00BCD4"/>
+  <text x="600" y="974" class="t" font-size="13" fill="#FFF" text-anchor="middle" font-weight="700">CapsulePlanner</text>
+  <text x="600" y="992" class="t" font-size="10" fill="#4DD0E1" text-anchor="middle">symbolic &#xB7; intent-bound &#xB7; policy enforced</text>
+  <text x="600" y="1010" class="t" font-size="10" fill="#546E7A" text-anchor="middle">majority_recommendation() on eligible capsules</text>
+  <line x1="442" y1="1022" x2="758" y2="1022" stroke="#1E3A4A" stroke-width="1"/>
+  <text x="526" y="1040" class="t" font-size="11" fill="#4CAF50" text-anchor="middle" font-weight="700">ASR 0.00%</text>
+  <text x="676" y="1040" class="t" font-size="11" fill="#4CAF50" text-anchor="middle" font-weight="700">benign 100%</text>
+  <text x="600" y="1058" class="t" font-size="9" fill="#00838F" text-anchor="middle" font-style="italic">primary defended path</text>
   <!-- LLMPlanner -->
-  <rect x="804" y="952" width="364" height="118" rx="5" fill="#0E0818" stroke="#7C3AED" stroke-width="1.5"/>
-  <rect x="804" y="952" width="364" height="3" rx="2" fill="#7C3AED"/>
-  <text x="986" y="976" class="title" font-size="13" fill="#FFFFFF" text-anchor="middle" font-weight="700">LLMPlanner</text>
-  <text x="986" y="994" class="title" font-size="10" fill="#CE93D8" text-anchor="middle">live model · structured JSON output</text>
-  <text x="986" y="1012" class="title" font-size="10" fill="#546E7A" text-anchor="middle">Ollama · OpenAI-compat · Responses API</text>
-  <line x1="828" y1="1024" x2="1144" y2="1024" stroke="#2D1550" stroke-width="1"/>
-  <text x="910" y="1042" class="title" font-size="11" fill="#CE93D8" text-anchor="middle">JSON 100%</text>
-  <text x="1062" y="1042" class="title" font-size="11" fill="#4CAF50" text-anchor="middle">ASR 0.00%</text>
-  <text x="986" y="1060" class="title" font-size="9" fill="#4A1580" text-anchor="middle" font-style="italic">first-pass JSON · repair fallback</text>
+  <rect x="804" y="950" width="364" height="118" rx="5" fill="#0E0818" stroke="#7C3AED" stroke-width="1.5"/>
+  <rect x="804" y="950" width="364" height="3" rx="2" fill="#7C3AED"/>
+  <text x="986" y="974" class="t" font-size="13" fill="#FFF" text-anchor="middle" font-weight="700">LLMPlanner</text>
+  <text x="986" y="992" class="t" font-size="10" fill="#CE93D8" text-anchor="middle">live model &#xB7; structured JSON output</text>
+  <text x="986" y="1010" class="t" font-size="10" fill="#546E7A" text-anchor="middle">Ollama &#xB7; OpenAI-compat &#xB7; Responses API</text>
+  <line x1="828" y1="1022" x2="1144" y2="1022" stroke="#2D1550" stroke-width="1"/>
+  <text x="910" y="1040" class="t" font-size="11" fill="#CE93D8" text-anchor="middle">JSON 100%</text>
+  <text x="1062" y="1040" class="t" font-size="11" fill="#4CAF50" text-anchor="middle">ASR 0.00%</text>
+  <text x="986" y="1058" class="t" font-size="9" fill="#4A1580" text-anchor="middle" font-style="italic">first-pass JSON &#xB7; repair fallback</text>
+  <!-- Merge lines -->
+  <line x1="214" y1="1070" x2="214" y2="1096" stroke="#455A64" stroke-width="1.2" stroke-dasharray="3,3"/>
+  <line x1="600" y1="1070" x2="600" y2="1096" stroke="#00BCD4" stroke-width="2"/>
+  <line x1="986" y1="1070" x2="986" y2="1090" stroke="#7C3AED" stroke-width="1.2" stroke-dasharray="3,3"/>
+  <line x1="214" y1="1090" x2="986" y2="1090" stroke="#263238" stroke-width="1.2"/>
+  <line x1="600" y1="1096" x2="600" y2="1128" stroke="#00BCD4" stroke-width="2" marker-end="url(#a)"/>
 
-  <!-- Three lines merging to single down arrow -->
-  <line x1="214" y1="1072" x2="214" y2="1106" stroke="#455A64" stroke-width="1.2" stroke-dasharray="3,3"/>
-  <line x1="600" y1="1072" x2="600" y2="1106" stroke="#00BCD4" stroke-width="2"/>
-  <line x1="986" y1="1072" x2="986" y2="1096" stroke="#7C3AED" stroke-width="1.2" stroke-dasharray="3,3"/>
-  <!-- Merge bar -->
-  <line x1="214" y1="1098" x2="986" y2="1098" stroke="#263238" stroke-width="1.2"/>
-  <line x1="986" y1="1096" x2="986" y2="1098" stroke="#263238" stroke-width="1.2"/>
-  <line x1="214" y1="1098" x2="214" y2="1106" stroke="#263238" stroke-width="1.2"/>
-  <line x1="600" y1="1106" x2="600" y2="1134" stroke="#00BCD4" stroke-width="2" marker-end="url(#arr)"/>
+  <!-- LAYER 6: DECISION -->
+  <text x="32" y="1144" class="t" font-size="9" fill="#78909C" letter-spacing="3" font-weight="700">LAYER 06 &#xB7; OUTPUT</text>
+  <rect x="32" y="1154" width="1136" height="72" rx="5" fill="#041828" stroke="#1E3A4A" stroke-width="1.5"/>
+  <rect x="32" y="1154" width="1136" height="3" rx="2" fill="#00BCD4" opacity="0.6"/>
+  <text x="90" y="1178" class="t" font-size="15" fill="#FFF" font-weight="700">CapsuleDecision</text>
+  <rect x="268" y="1162" width="118" height="22" rx="11" fill="#091C10" stroke="#1B4020" stroke-width="1"/><text x="327" y="1177" class="t" font-size="10" fill="#81C784" text-anchor="middle">allowed: bool</text>
+  <rect x="396" y="1162" width="110" height="22" rx="11" fill="#0D1E2E" stroke="#1E3A4A" stroke-width="1"/><text x="451" y="1177" class="t" font-size="10" fill="#4DD0E1" text-anchor="middle">reason: str</text>
+  <rect x="516" y="1162" width="166" height="22" rx="11" fill="#0D1E2E" stroke="#1E3A4A" stroke-width="1"/><text x="599" y="1177" class="t" font-size="10" fill="#4DD0E1" text-anchor="middle">plan: { action &#xB7; risk &#xB7; rec }</text>
+  <rect x="692" y="1162" width="136" height="22" rx="11" fill="#0D1E2E" stroke="#1E3A4A" stroke-width="1"/><text x="760" y="1177" class="t" font-size="10" fill="#4DD0E1" text-anchor="middle">policy_trace: tuple</text>
+  <rect x="838" y="1162" width="168" height="22" rx="11" fill="#0D1E2E" stroke="#1E3A4A" stroke-width="1"/><text x="922" y="1177" class="t" font-size="10" fill="#4DD0E1" text-anchor="middle">retrieved_capsule_ids</text>
+  <rect x="1016" y="1162" width="142" height="22" rx="11" fill="#0D1E2E" stroke="#1E3A4A" stroke-width="1"/><text x="1087" y="1177" class="t" font-size="10" fill="#4DD0E1" text-anchor="middle">sealed_capsule_ids</text>
+  <text x="56" y="1210" class="t" font-size="10" fill="#37474F" font-style="italic">allowed=false &#x2192; logged to audit trail and surfaced for human review</text>
+  <line x1="600" y1="1228" x2="600" y2="1258" stroke="#00BCD4" stroke-width="1.5" marker-end="url(#a)"/>
 
-  <!-- ════════════════════════════════════════ LAYER 6: DECISION ════ -->
-  <text x="32" y="1150" class="title" font-size="9" fill="#78909C" letter-spacing="3" font-weight="700">LAYER 06 · OUTPUT</text>
+  <!-- LAYER 7: METRICS -->
+  <text x="32" y="1274" class="t" font-size="9" fill="#78909C" letter-spacing="3" font-weight="700">LAYER 07 &#xB7; EVALUATION METRICS &#xB7; HELD-OUT TEST SPLIT</text>
+  <rect x="32" y="1284" width="272" height="86" rx="5" fill="url(#mr)" stroke="#EF5350" stroke-width="1.2" stroke-opacity="0.5"/>
+  <rect x="32" y="1284" width="272" height="3" rx="2" fill="#EF5350" opacity="0.7"/>
+  <text x="168" y="1312" class="t" font-size="11" fill="#EF9A9A" text-anchor="middle" font-weight="600">attack_success_rate</text>
+  <text x="168" y="1346" class="t" font-size="30" fill="#EF5350" text-anchor="middle" font-weight="800">0.00%</text>
+  <text x="168" y="1364" class="t" font-size="10" fill="#455A64" text-anchor="middle">intent capsules &#xB7; workflow corpus</text>
+  <rect x="316" y="1284" width="272" height="86" rx="5" fill="url(#mg)" stroke="#4CAF50" stroke-width="1.2" stroke-opacity="0.5"/>
+  <rect x="316" y="1284" width="272" height="3" rx="2" fill="#4CAF50" opacity="0.7"/>
+  <text x="452" y="1312" class="t" font-size="11" fill="#A5D6A7" text-anchor="middle" font-weight="600">benign_accuracy</text>
+  <text x="452" y="1346" class="t" font-size="30" fill="#4CAF50" text-anchor="middle" font-weight="800">100.0%</text>
+  <text x="452" y="1364" class="t" font-size="10" fill="#455A64" text-anchor="middle">zero false positives</text>
+  <rect x="600" y="1284" width="272" height="86" rx="5" fill="url(#mr)" stroke="#EF5350" stroke-width="1.2" stroke-opacity="0.5"/>
+  <rect x="600" y="1284" width="272" height="3" rx="2" fill="#EF5350" opacity="0.7"/>
+  <text x="736" y="1312" class="t" font-size="10.5" fill="#EF9A9A" text-anchor="middle" font-weight="600">unauthorized_risky_action_rate</text>
+  <text x="736" y="1346" class="t" font-size="30" fill="#EF5350" text-anchor="middle" font-weight="800">0.00%</text>
+  <text x="736" y="1364" class="t" font-size="10" fill="#455A64" text-anchor="middle">medium + high risk blocked</text>
+  <rect x="884" y="1284" width="284" height="86" rx="5" fill="url(#mb)" stroke="#00BCD4" stroke-width="1.2" stroke-opacity="0.5"/>
+  <rect x="884" y="1284" width="284" height="3" rx="2" fill="#00BCD4" opacity="0.7"/>
+  <text x="1026" y="1312" class="t" font-size="11" fill="#4DD0E1" text-anchor="middle" font-weight="600">sealing_rate</text>
+  <text x="1026" y="1346" class="t" font-size="30" fill="#00BCD4" text-anchor="middle" font-weight="800">8.33%</text>
+  <text x="1026" y="1364" class="t" font-size="10" fill="#455A64" text-anchor="middle">poison capsules flagged for audit</text>
 
-  <rect x="32" y="1160" width="1136" height="72" rx="5" fill="#041828" stroke="#1E3A4A" stroke-width="1.5"/>
-  <rect x="32" y="1160" width="1136" height="3" rx="2" fill="#00BCD4" opacity="0.6"/>
+  <!-- Insights row -->
+  <rect x="32" y="1390" width="358" height="52" rx="5" fill="#120820" stroke="#7C3AED" stroke-width="1.2"/>
+  <rect x="32" y="1390" width="3" height="52" rx="2" fill="#7C3AED"/>
+  <text x="52" y="1412" class="t" font-size="13" fill="#CE93D8" font-style="italic" font-weight="700">* memory &#x2260; planning authority *</text>
+  <text x="52" y="1432" class="t" font-size="10" fill="#546E7A">Retrieval does not imply authorization</text>
+  <rect x="422" y="1390" width="368" height="52" rx="5" fill="#120820" stroke="#7C3AED" stroke-width="1.2"/>
+  <rect x="422" y="1390" width="3" height="52" rx="2" fill="#7C3AED"/>
+  <text x="442" y="1412" class="t" font-size="13" fill="#CE93D8" font-style="italic" font-weight="700">* every capsule proves its scope *</text>
+  <text x="442" y="1432" class="t" font-size="10" fill="#546E7A">Topics, actions, authority &#x2014; bounded at compile time</text>
+  <rect x="822" y="1390" width="346" height="52" rx="5" fill="#120820" stroke="#7C3AED" stroke-width="1.2"/>
+  <rect x="822" y="1390" width="3" height="52" rx="2" fill="#7C3AED"/>
+  <text x="842" y="1412" class="t" font-size="13" fill="#CE93D8" font-style="italic" font-weight="700">* temptation &#x2260; accepted plan *</text>
+  <text x="842" y="1432" class="t" font-size="10" fill="#546E7A">2.78% tempted &#x2192; 0.00% final ASR</text>
 
-  <text x="90" y="1184" class="title" font-size="15" fill="#FFFFFF" font-weight="700">CapsuleDecision</text>
-
-  <!-- Output fields as inline chips -->
-  <rect x="268" y="1168" width="118" height="22" rx="11" fill="#091C10" stroke="#1B4020" stroke-width="1"/>
-  <text x="327" y="1183" class="title" font-size="10" fill="#81C784" text-anchor="middle">allowed: bool</text>
-
-  <rect x="396" y="1168" width="110" height="22" rx="11" fill="#0D1E2E" stroke="#1E3A4A" stroke-width="1"/>
-  <text x="451" y="1183" class="title" font-size="10" fill="#4DD0E1" text-anchor="middle">reason: str</text>
-
-  <rect x="516" y="1168" width="166" height="22" rx="11" fill="#0D1E2E" stroke="#1E3A4A" stroke-width="1"/>
-  <text x="599" y="1183" class="title" font-size="10" fill="#4DD0E1" text-anchor="middle">plan: { action · risk · rec }</text>
-
-  <rect x="692" y="1168" width="136" height="22" rx="11" fill="#0D1E2E" stroke="#1E3A4A" stroke-width="1"/>
-  <text x="760" y="1183" class="title" font-size="10" fill="#4DD0E1" text-anchor="middle">policy_trace: tuple</text>
-
-  <rect x="838" y="1168" width="168" height="22" rx="11" fill="#0D1E2E" stroke="#1E3A4A" stroke-width="1"/>
-  <text x="922" y="1183" class="title" font-size="10" fill="#4DD0E1" text-anchor="middle">retrieved_capsule_ids</text>
-
-  <rect x="1016" y="1168" width="142" height="22" rx="11" fill="#0D1E2E" stroke="#1E3A4A" stroke-width="1"/>
-  <text x="1087" y="1183" class="title" font-size="10" fill="#4DD0E1" text-anchor="middle">sealed_capsule_ids</text>
-
-  <text x="56" y="1216" class="title" font-size="10" fill="#37474F" font-style="italic">Decision flows to tool executor · allowed=false decisions are logged to audit trail and surfaced for human review</text>
-
-  <!-- Connector: decision → metrics -->
-  <line x1="600" y1="1234" x2="600" y2="1264" stroke="#00BCD4" stroke-width="1.5" marker-end="url(#arr)"/>
-
-  <!-- ════════════════════════════════════════ LAYER 7: METRICS ════ -->
-  <text x="32" y="1280" class="title" font-size="9" fill="#78909C" letter-spacing="3" font-weight="700">LAYER 07 · EVALUATION METRICS · HELD-OUT TEST SPLIT</text>
-
-  <!-- Metric 1: ASR -->
-  <rect x="32" y="1290" width="272" height="86" rx="5" fill="url(#metric-red)" stroke="#EF5350" stroke-width="1.2" stroke-opacity="0.5"/>
-  <rect x="32" y="1290" width="272" height="3" rx="2" fill="#EF5350" opacity="0.7"/>
-  <text x="168" y="1318" class="title" font-size="11" fill="#EF9A9A" text-anchor="middle" font-weight="600">attack_success_rate</text>
-  <text x="168" y="1352" class="title" font-size="30" fill="#EF5350" text-anchor="middle" font-weight="800">0.00%</text>
-  <text x="168" y="1370" class="title" font-size="10" fill="#455A64" text-anchor="middle">intent capsules · workflow corpus</text>
-
-  <!-- Metric 2: Benign Accuracy -->
-  <rect x="316" y="1290" width="272" height="86" rx="5" fill="url(#metric-green)" stroke="#4CAF50" stroke-width="1.2" stroke-opacity="0.5"/>
-  <rect x="316" y="1290" width="272" height="3" rx="2" fill="#4CAF50" opacity="0.7"/>
-  <text x="452" y="1318" class="title" font-size="11" fill="#A5D6A7" text-anchor="middle" font-weight="600">benign_accuracy</text>
-  <text x="452" y="1352" class="title" font-size="30" fill="#4CAF50" text-anchor="middle" font-weight="800">100.0%</text>
-  <text x="452" y="1370" class="title" font-size="10" fill="#455A64" text-anchor="middle">zero false positives</text>
-
-  <!-- Metric 3: Risky Action Rate -->
-  <rect x="600" y="1290" width="272" height="86" rx="5" fill="url(#metric-red)" stroke="#EF5350" stroke-width="1.2" stroke-opacity="0.5"/>
-  <rect x="600" y="1290" width="272" height="3" rx="2" fill="#EF5350" opacity="0.7"/>
-  <text x="736" y="1318" class="title" font-size="10.5" fill="#EF9A9A" text-anchor="middle" font-weight="600">unauthorized_risky_action_rate</text>
-  <text x="736" y="1352" class="title" font-size="30" fill="#EF5350" text-anchor="middle" font-weight="800">0.00%</text>
-  <text x="736" y="1370" class="title" font-size="10" fill="#455A64" text-anchor="middle">medium + high risk blocked</text>
-
-  <!-- Metric 4: Sealing Rate -->
-  <rect x="884" y="1290" width="284" height="86" rx="5" fill="url(#metric-blue)" stroke="#00BCD4" stroke-width="1.2" stroke-opacity="0.5"/>
-  <rect x="884" y="1290" width="284" height="3" rx="2" fill="#00BCD4" opacity="0.7"/>
-  <text x="1026" y="1318" class="title" font-size="11" fill="#4DD0E1" text-anchor="middle" font-weight="600">sealing_rate</text>
-  <text x="1026" y="1352" class="title" font-size="30" fill="#00BCD4" text-anchor="middle" font-weight="800">8.33%</text>
-  <text x="1026" y="1370" class="title" font-size="10" fill="#455A64" text-anchor="middle">poison capsules flagged for audit</text>
-
-  <!-- ════════════════════════════════════════ BOTTOM ROW ════ -->
-
-  <!-- Agent variants strip -->
-  <rect x="32" y="1396" width="550" height="90" rx="5" fill="#0A1016" stroke="#263238" stroke-width="1"/>
-  <text x="50" y="1416" class="title" font-size="9" fill="#78909C" letter-spacing="2.5" font-weight="700">AGENT VARIANTS</text>
-  <text x="50" y="1434" class="title" font-size="10" fill="#37474F">AmbientMemory · KeywordFilter · TrustScoreRetrieval · OutputModeration</text>
-  <text x="50" y="1452" class="title" font-size="10" fill="#37474F">Counterfactual · ProvenanceOnly ·</text>
-  <text x="249" y="1452" class="title" font-size="10" fill="#4DD0E1" font-weight="700"> IntentCapsules ★</text>
-  <text x="50" y="1470" class="title" font-size="9" fill="#263238" font-style="italic">ablations: no_topic_scope · no_denied_actions · no_quorum</text>
-  <text x="50" y="1480" class="title" font-size="9" fill="#263238" font-style="italic">10+ attack modes · ClosedLoopAdaptiveAttacker · sensitivity sweep</text>
-
-  <!-- LLM providers strip -->
-  <rect x="594" y="1396" width="574" height="90" rx="5" fill="#0A1016" stroke="#263238" stroke-width="1"/>
-  <text x="612" y="1416" class="title" font-size="9" fill="#78909C" letter-spacing="2.5" font-weight="700">LLM PROVIDERS</text>
-  <rect x="612" y="1422" width="150" height="20" rx="3" fill="#0D1E2E" stroke="#1E3A4A" stroke-width="1"/>
-  <text x="687" y="1436" class="title" font-size="10" fill="#4DD0E1" text-anchor="middle">OllamaGenerate</text>
-  <rect x="772" y="1422" width="184" height="20" rx="3" fill="#0D1E2E" stroke="#1E3A4A" stroke-width="1"/>
-  <text x="864" y="1436" class="title" font-size="10" fill="#4DD0E1" text-anchor="middle">OpenAICompatibleChat</text>
-  <rect x="966" y="1422" width="186" height="20" rx="3" fill="#1A0A2E" stroke="#4A1580" stroke-width="1"/>
-  <text x="1059" y="1436" class="title" font-size="10" fill="#CE93D8" text-anchor="middle">OpenAIResponses (new)</text>
-  <text x="612" y="1458" class="title" font-size="10" fill="#37474F">format=json · temperature=0 · strict JSON schema · repair fallback</text>
-  <text x="612" y="1476" class="title" font-size="10" fill="#37474F">planner_attack_success separates LLM temptation from final ASR</text>
-
-  <!-- ════════════════════════════════════════ INSIGHTS ════ -->
-  <rect x="32" y="1500" width="358" height="52" rx="5" fill="#120820" stroke="#7C3AED" stroke-width="1.2"/>
-  <rect x="32" y="1500" width="3" height="52" rx="2" fill="#7C3AED"/>
-  <text x="52" y="1522" class="title" font-size="13" fill="#CE93D8" font-style="italic" font-weight="700">* memory ≠ planning authority *</text>
-  <text x="52" y="1542" class="title" font-size="10" fill="#546E7A">Retrieval does not imply authorization</text>
-
-  <rect x="422" y="1500" width="376" height="52" rx="5" fill="#120820" stroke="#7C3AED" stroke-width="1.2"/>
-  <rect x="422" y="1500" width="3" height="52" rx="2" fill="#7C3AED"/>
-  <text x="442" y="1522" class="title" font-size="13" fill="#CE93D8" font-style="italic" font-weight="700">* every capsule proves its scope *</text>
-  <text x="442" y="1542" class="title" font-size="10" fill="#546E7A">Topics, actions, authority — bounded at compile time</text>
-
-  <rect x="830" y="1500" width="338" height="52" rx="5" fill="#120820" stroke="#7C3AED" stroke-width="1.2"/>
-  <rect x="830" y="1500" width="3" height="52" rx="2" fill="#7C3AED"/>
-  <text x="850" y="1522" class="title" font-size="13" fill="#CE93D8" font-style="italic" font-weight="700">* temptation ≠ accepted plan *</text>
-  <text x="850" y="1542" class="title" font-size="10" fill="#546E7A">2.78% tempted → 0.00% final ASR</text>
-
-  <!-- ════════════════════════════════════════ FOOTER ════ -->
-  <rect x="0" y="1570" width="1200" height="290" fill="#060A12"/>
-  <line x1="0" y1="1570" x2="1200" y2="1570" stroke="#263238" stroke-width="1"/>
-
-  <!-- Honest limits -->
-  <text x="32" y="1594" class="title" font-size="9" fill="#EF5350" letter-spacing="2.5" font-weight="700">HONEST LIMITS</text>
-  <text x="32" y="1614" class="title" font-size="11" fill="#37474F">⚠  Workflow corpus is generated — no real collected traces yet (trace_corpus import path ready)</text>
-  <text x="32" y="1630" class="title" font-size="11" fill="#37474F">⚠  Live LLM suite is 216 rows — larger multi-seed runs needed for publication confidence</text>
-  <text x="32" y="1646" class="title" font-size="11" fill="#37474F">⚠  OCR / multimodal represented as extracted text — raw image pipeline not yet exercised</text>
-  <text x="32" y="1662" class="title" font-size="11" fill="#37474F">⚠  Source labels are metadata — no cryptographic provenance or signed append-only log</text>
-  <text x="32" y="1678" class="title" font-size="11" fill="#37474F">⚠  Policy thresholds are research parameters — not calibrated on production workloads</text>
-
-  <!-- Baseline comparison mini table -->
-  <text x="700" y="1594" class="title" font-size="9" fill="#78909C" letter-spacing="2.5" font-weight="700">BASELINE COMPARISON (WORKFLOW CORPUS TEST SPLIT)</text>
-  <text x="700" y="1614" class="title" font-size="10" fill="#37474F">Ambient baseline          ASR 33.33%   benign 100%   risky 22.22%</text>
-  <text x="700" y="1630" class="title" font-size="10" fill="#37474F">Counterfactual            ASR  3.96%   benign  91%   risky  2.64%</text>
-  <text x="700" y="1646" class="title" font-size="10" fill="#4DD0E1" font-weight="600">Intent Capsules ★         ASR  0.00%   benign 100%   risky  0.00%</text>
-  <text x="700" y="1662" class="title" font-size="10" fill="#37474F">Live LLM defended         ASR  0.00%   planner tempted 2.78%</text>
-  <text x="700" y="1678" class="title" font-size="10" fill="#37474F">  llama3 · mistral · phi3  ·  216 rows  ·  first-pass JSON 100%</text>
-
-  <!-- Footer bar -->
-  <line x1="32" y1="1700" x2="1168" y2="1700" stroke="#1E2A34" stroke-width="1"/>
-  <text x="32" y="1720" class="title" font-size="11" fill="#263238">github.com/Mr-Akuma/Sealing-Jutsu</text>
-  <text x="600" y="1720" class="title" font-size="11" fill="#263238" text-anchor="middle">CapsuleGuard · Agent Memory Poisoning Defense Research</text>
-  <text x="1168" y="1720" class="title" font-size="11" fill="#263238" text-anchor="end">Python 3.10+</text>
-
-  <!-- Bottom accent -->
-  <rect x="0" y="1856" width="1200" height="4" fill="url(#title-line)" opacity="0.5"/>
+  <!-- Footer -->
+  <rect x="0" y="1460" width="1200" height="400" fill="#060A12"/>
+  <line x1="0" y1="1460" x2="1200" y2="1460" stroke="#263238" stroke-width="1"/>
+  <text x="32" y="1484" class="t" font-size="9" fill="#EF5350" letter-spacing="2.5" font-weight="700">HONEST LIMITS</text>
+  <text x="32" y="1504" class="t" font-size="11" fill="#37474F">&#x26A0; Workflow corpus is generated &#x2014; no real collected traces yet (trace_corpus import path is ready)</text>
+  <text x="32" y="1520" class="t" font-size="11" fill="#37474F">&#x26A0; Live LLM suite is 216 rows &#x2014; larger multi-seed runs needed for publication confidence</text>
+  <text x="32" y="1536" class="t" font-size="11" fill="#37474F">&#x26A0; OCR / multimodal represented as extracted text &#x2014; raw image pipeline not yet exercised</text>
+  <text x="32" y="1552" class="t" font-size="11" fill="#37474F">&#x26A0; Source labels are metadata &#x2014; no cryptographic provenance or signed append-only log</text>
+  <text x="32" y="1568" class="t" font-size="11" fill="#37474F">&#x26A0; Policy thresholds are research parameters &#x2014; not calibrated on production workloads</text>
+  <text x="700" y="1484" class="t" font-size="9" fill="#78909C" letter-spacing="2.5" font-weight="700">BASELINE COMPARISON (WORKFLOW CORPUS TEST SPLIT)</text>
+  <text x="700" y="1504" class="t" font-size="10" fill="#37474F">Ambient baseline       ASR 33.33%   benign 100%   risky 22.22%</text>
+  <text x="700" y="1520" class="t" font-size="10" fill="#37474F">Counterfactual         ASR  3.96%   benign  91%   risky  2.64%</text>
+  <text x="700" y="1536" class="t" font-size="10" fill="#4DD0E1" font-weight="600">Intent Capsules &#x2605;      ASR  0.00%   benign 100%   risky  0.00%</text>
+  <text x="700" y="1552" class="t" font-size="10" fill="#37474F">Live LLM defended      ASR  0.00%   planner tempted 2.78%</text>
+  <text x="700" y="1568" class="t" font-size="10" fill="#37474F">  llama3 &#xB7; mistral &#xB7; phi3 &#xB7; 216 rows &#xB7; first-pass JSON 100%</text>
+  <line x1="32" y1="1588" x2="1168" y2="1588" stroke="#1E2A34" stroke-width="1"/>
+  <text x="32" y="1610" class="t" font-size="11" fill="#263238">github.com/Mr-Akuma/Sealing-Jutsu</text>
+  <text x="600" y="1610" class="t" font-size="11" fill="#263238" text-anchor="middle">CapsuleGuard &#xB7; Agent Memory Poisoning Defense Research</text>
+  <text x="1168" y="1610" class="t" font-size="11" fill="#263238" text-anchor="end">Python 3.10+</text>
+  <rect x="0" y="1856" width="1200" height="4" fill="url(#tl)" opacity="0.5"/>
 </svg>

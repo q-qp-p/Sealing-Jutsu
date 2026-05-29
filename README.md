@@ -71,6 +71,12 @@ Raw memory
 </p>
 
 
+<p align="center">
+  <img src="assets/capsuleguard-architecture.svg" alt="CapsuleGuard architecture diagram" width="100%">
+</p>
+
+
+
 ## Current Evidence
 
 Latest committed workflow-corpus test split:
