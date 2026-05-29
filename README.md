@@ -1,4 +1,4 @@
-<p align="center">
+﻿<p align="center">
   <img src="assets/sealing-jutsu-banner.png" alt="Sealing Jutsu project banner" width="100%">
 </p>
 
@@ -10,7 +10,7 @@
 
 <p align="center">
   <a href="#quick-start"><img alt="Python" src="https://img.shields.io/badge/python-3.10%2B-111827"></a>
-  <a href="#testing"><img alt="Tests" src="https://img.shields.io/badge/tests-96%20passing-1f883d"></a>
+  <a href="#testing"><img alt="Tests" src="https://img.shields.io/badge/tests-136%20passing-1f883d"></a>
   <a href="#current-evidence"><img alt="Held-out ASR" src="https://img.shields.io/badge/held--out%20ASR-0.00%25-0f766e"></a>
   <a href="#honest-limits"><img alt="Scope" src="https://img.shields.io/badge/scope-research%20prototype-7c2d12"></a>
 </p>
@@ -66,6 +66,10 @@ Raw memory
   -> Plan authorization gate
   -> Tool/action decision
 ```
+<p align="center">
+  <img src="assets/capsuleguard-architecture.svg" alt="CapsuleGuard architecture diagram — 7-layer intent-bound memory defense pipeline" width="100%">
+</p>
+
 
 ## Current Evidence
 
