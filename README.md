@@ -185,7 +185,17 @@ The default and corpus benchmarks are designed to stress more than simple keywor
 ```bash
 git clone https://github.com/Mr-Akuma/Sealing-Jutsu.git
 cd Sealing-Jutsu
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
 python -m unittest discover -s tests
+```
+
+On Windows PowerShell, activate the environment with:
+
+```powershell
+.\.venv\Scripts\Activate.ps1
 ```
 
 Run the default hardened benchmark:
@@ -257,6 +267,8 @@ python run_llm_experiment.py --provider local
 python run_llm_experiment.py --provider ollama --models llama3,mistral,phi3 --repetitions 3
 python run_llm_experiment.py --provider openai-responses --api-key-env OPENAI_API_KEY --models gpt-5.2-codex,gpt-5.1-codex --case-source workflow-corpus
 ```
+
+The `local` provider is deterministic and needs no external service. The `ollama` provider expects Ollama to be running locally with the requested models already pulled. The `openai-responses` provider requires `OPENAI_API_KEY`.
 
 Medium live LLM workflow-corpus suite:
 
@@ -380,7 +392,7 @@ OK
 
 ## Output Files
 
-Benchmark runs write CSV, JSONL, and chart artifacts under `results/`.
+Benchmark runs write CSV, JSONL, and chart artifacts under `results/`. Curated summary files are committed for reproducibility. Large traces, rerun logs, process IDs, and local scratch outputs are ignored by `.gitignore` unless intentionally added.
 
 ```text
 results/
@@ -408,6 +420,11 @@ experiments/                   Experiment entry points and wrappers
 paper/                         Conference-style draft material
 results/                       Generated benchmark outputs
 tests/                         Unit and regression tests
+.github/workflows/tests.yml    GitHub Actions unit-test workflow
+requirements.txt               Python dependencies for tests and paper generation
+SECURITY.md                    Defensive vulnerability-reporting scope
+ETHICS.md                      Intended-use and safety guidance
+LICENSE                        MIT license
 run_capsuleguard.py            Main benchmark runner
 generate_workflow_corpus.py    Corpus generation entry point
 ```

@@ -1,0 +1,6 @@
+# Runtime and paper-generation dependencies.
+#
+# The core simulator mostly uses the Python standard library. These packages are
+# needed for the generated DOCX paper draft and figure assets under paper/.
+Pillow>=10.0
+python-docx>=1.1

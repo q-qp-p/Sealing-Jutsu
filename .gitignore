@@ -1,7 +1,3 @@
-# Large trace files - too big for GitHub
-results/*.jsonl
-results/*tool_traces.csv
-
 # Python
 __pycache__/
 *.py[cod]
@@ -15,3 +11,24 @@ build/
 # OS
 .DS_Store
 Thumbs.db
+
+# Local run logs and process markers
+*.log
+*.err.log
+*.pid
+
+# Generated benchmark traces are often large. Curated CSV summaries and selected
+# committed result files remain tracked even when matching older ignore rules.
+results/*.jsonl
+results/*tool_traces.csv
+
+# Local scratch/rerun outputs that should not create noisy Git status entries.
+results/*_rerun*
+results/*_run.log
+results/complete_integrated_run*
+results/complete_integrated_run_2*
+results/complete_workflow_corpus_charts/
+results/gap_fix_local_*
+results/llm_check_*
+results/trace_corpus_sample_*
+results/trace_corpus_sample_charts/
