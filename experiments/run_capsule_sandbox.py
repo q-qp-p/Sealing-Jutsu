@@ -49,6 +49,7 @@ ATTACK_MODE_CHOICES = (
     "generated_holdout",
     "trusted_source_compromise",
     "advanced_attack_suite",
+    "retrieval_collision",
     "utility",
     "multimodal",
     "attacker_generated",
@@ -67,6 +68,10 @@ ATTACK_MODE_DEFINITIONS = {
     "advanced_attack_suite": (
         "Seven-area stress suite covering adaptive-style, delayed, cross-session, tool-chain, "
         "semantic paraphrase, retrieval collision, and OCR-style poisoning."
+    ),
+    "retrieval_collision": (
+        "vector retrieval collision benchmark that crafts topically overlapping poison memories and checks whether "
+        "retrieval similarity can become influence without policy authorization."
     ),
     "utility": "Benign personalization and normal-use tasks used to measure usefulness preservation.",
     "multimodal": "OCR-style image/document extracted-memory poisoning cases.",
