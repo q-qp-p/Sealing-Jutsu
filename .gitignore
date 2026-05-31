@@ -33,3 +33,6 @@ results/llm_check_*
 results/trace_corpus_sample_*
 results/trace_corpus_sample_charts/
 results/*validation_report.json
+
+# Local research notes that should not be pushed.
+docs/REAL_WORLD_READINESS.md
