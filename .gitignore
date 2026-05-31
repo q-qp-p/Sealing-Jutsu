@@ -32,3 +32,4 @@ results/gap_fix_local_*
 results/llm_check_*
 results/trace_corpus_sample_*
 results/trace_corpus_sample_charts/
+results/*validation_report.json

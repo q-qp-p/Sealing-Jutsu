@@ -19,7 +19,7 @@ python -m unittest discover -s tests
 Current expected result:
 
 ```text
-Ran 136 tests
+Ran 142 tests
 OK
 ```
 
@@ -78,7 +78,13 @@ results\workflow_corpus_tool_traces.csv
 If you collect your own workflow traces, keep them in JSONL format and pass the file directly:
 
 ```powershell
-python run_capsuleguard.py --attack-mode workflow_corpus --workflow-corpus path\to\your_workflows.jsonl --summary-csv results\custom_workflow_summary.csv --trace-jsonl results\custom_workflow_traces.jsonl --breakdown-csv results\custom_workflow_breakdown.csv --gap-closure-csv results\custom_workflow_gap_closure.csv --tool-trace-csv results\custom_workflow_tool_traces.csv --charts-dir results\custom_workflow_charts
+python validate_trace_corpus.py path\to\raw_traces.jsonl --redacted-out data\redacted_lab_traces.jsonl --report-json results\redacted_lab_trace_report.json --require-redaction
+```
+
+Use the redacted file for paper evidence and benchmark runs:
+
+```powershell
+python run_capsuleguard.py --attack-mode trace_corpus --workflow-corpus data\redacted_lab_traces.jsonl --summary-csv results\custom_trace_summary.csv --trace-jsonl results\custom_trace_traces.jsonl --breakdown-csv results\custom_trace_breakdown.csv --gap-closure-csv results\custom_trace_gap_closure.csv --tool-trace-csv results\custom_trace_tool_traces.csv --charts-dir results\custom_trace_charts
 ```
 
 Change these factors when you want a harder test:
@@ -92,6 +98,8 @@ Change these factors when you want a harder test:
 ```
 
 For paper-quality evidence, keep the corpus separate from the code changes you tune on. The best pattern is train, dev, and test splits.
+
+The validator checks whether the corpus has poison labels, memory-like events, source-type coverage, and redaction coverage for common private identifiers. It does not prove the corpus is representative; it gives you a safer intake gate before the benchmark sees lab traces.
 
 ## 5. Generate Held-Out Workflow Splits
 

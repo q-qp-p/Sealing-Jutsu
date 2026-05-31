@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import re
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
@@ -29,6 +31,40 @@ EVENT_SOURCE_TYPES = {
 
 class WorkflowCorpusError(ValueError):
     pass
+
+
+@dataclass(slots=True)
+class TraceCorpusValidationReport:
+    total_records: int = 0
+    poisoned_records: int = 0
+    benign_records: int = 0
+    memory_events: int = 0
+    poison_memory_events: int = 0
+    source_type_counts: dict[str, int] = field(default_factory=dict)
+    redaction_counts: dict[str, int] = field(default_factory=dict)
+    errors: tuple[str, ...] = ()
+    warnings: tuple[str, ...] = ()
+
+    def as_dict(self) -> dict[str, object]:
+        return {
+            "total_records": self.total_records,
+            "poisoned_records": self.poisoned_records,
+            "benign_records": self.benign_records,
+            "memory_events": self.memory_events,
+            "poison_memory_events": self.poison_memory_events,
+            "source_type_counts": dict(self.source_type_counts),
+            "redaction_counts": dict(self.redaction_counts),
+            "errors": list(self.errors),
+            "warnings": list(self.warnings),
+        }
+
+
+REDACTION_PATTERNS: tuple[tuple[str, re.Pattern[str], str], ...] = (
+    ("email", re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b"), "[REDACTED_EMAIL]"),
+    ("url", re.compile(r"https?://[^\s\"'<>]+"), "[REDACTED_URL]"),
+    ("secret", re.compile(r"\b(?:sk|ghp)[-_][A-Za-z0-9._=-]+\b"), "[REDACTED_SECRET]"),
+    ("phone", re.compile(r"(?<!\w)(?:\+?\d[\d\s().-]{7,}\d)(?!\w)"), "[REDACTED_PHONE]"),
+)
 
 
 def load_workflow_corpus_scenarios(path: str | Path | None = None) -> list[Scenario]:
@@ -73,6 +109,122 @@ def load_agent_trace_scenarios(path: str | Path | None = None) -> list[Scenario]
     if not scenarios:
         raise WorkflowCorpusError(f"Agent trace corpus is empty: {corpus_path}")
     return scenarios
+
+
+def validate_agent_trace_corpus(path: str | Path, *, require_redaction: bool = False) -> TraceCorpusValidationReport:
+    corpus_path = Path(path)
+    errors: list[str] = []
+    warnings: list[str] = []
+    source_type_counts: dict[str, int] = {}
+    redaction_counts = {name: 0 for name, _, _ in REDACTION_PATTERNS}
+    total_records = 0
+    poisoned_records = 0
+    benign_records = 0
+    memory_events = 0
+    poison_memory_events = 0
+
+    if not corpus_path.exists():
+        return TraceCorpusValidationReport(errors=(f"Agent trace corpus not found: {corpus_path}",))
+
+    with corpus_path.open("r", encoding="utf-8") as handle:
+        for line_number, line in enumerate(handle, start=1):
+            stripped = line.strip()
+            if not stripped or stripped.startswith("#"):
+                continue
+            total_records += 1
+            try:
+                record = json.loads(stripped)
+            except json.JSONDecodeError:
+                errors.append(f"{corpus_path}:{line_number}: invalid JSONL trace record")
+                continue
+            if not isinstance(record, dict):
+                errors.append(f"{corpus_path}:{line_number}: trace record must be an object")
+                continue
+
+            _, counts = redact_agent_trace_record(record)
+            for name, count in counts.items():
+                redaction_counts[name] = redaction_counts.get(name, 0) + count
+
+            try:
+                scenario = _trace_record_to_scenario(record, corpus_path, line_number)
+            except WorkflowCorpusError as exc:
+                errors.append(str(exc))
+                continue
+
+            if scenario.poisoned:
+                poisoned_records += 1
+            else:
+                benign_records += 1
+            memory_events += len(scenario.memories)
+            poison_memory_events += len(scenario.poisoned_memory_ids)
+            for memory in scenario.memories:
+                key = memory.source_type.value
+                source_type_counts[key] = source_type_counts.get(key, 0) + 1
+
+    if total_records == 0:
+        errors.append(f"Agent trace corpus is empty: {corpus_path}")
+    if require_redaction and not any(redaction_counts.values()):
+        warnings.append("No private identifiers matched the redaction patterns")
+
+    return TraceCorpusValidationReport(
+        total_records=total_records,
+        poisoned_records=poisoned_records,
+        benign_records=benign_records,
+        memory_events=memory_events,
+        poison_memory_events=poison_memory_events,
+        source_type_counts=source_type_counts,
+        redaction_counts=redaction_counts,
+        errors=tuple(errors),
+        warnings=tuple(warnings),
+    )
+
+
+def redact_agent_trace_record(record: dict[str, Any]) -> tuple[dict[str, Any], dict[str, int]]:
+    counts = {name: 0 for name, _, _ in REDACTION_PATTERNS}
+
+    def redact_value(value: Any) -> Any:
+        if isinstance(value, str):
+            redacted = value
+            for name, pattern, replacement in REDACTION_PATTERNS:
+                redacted, count = pattern.subn(replacement, redacted)
+                counts[name] += count
+            return redacted
+        if isinstance(value, list):
+            return [redact_value(item) for item in value]
+        if isinstance(value, dict):
+            return {str(key): redact_value(item) for key, item in value.items()}
+        return value
+
+    redacted_record = redact_value(record)
+    return redacted_record, counts
+
+
+def write_redacted_agent_trace_corpus(input_path: str | Path, output_path: str | Path) -> TraceCorpusValidationReport:
+    source = Path(input_path)
+    target = Path(output_path)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    redaction_counts = {name: 0 for name, _, _ in REDACTION_PATTERNS}
+
+    with source.open("r", encoding="utf-8") as in_handle, target.open("w", encoding="utf-8") as out_handle:
+        for line in in_handle:
+            stripped = line.strip()
+            if not stripped:
+                continue
+            if stripped.startswith("#"):
+                out_handle.write(line)
+                continue
+            record = json.loads(stripped)
+            if not isinstance(record, dict):
+                out_handle.write(json.dumps(record, sort_keys=True) + "\n")
+                continue
+            redacted, counts = redact_agent_trace_record(record)
+            for name, count in counts.items():
+                redaction_counts[name] = redaction_counts.get(name, 0) + count
+            out_handle.write(json.dumps(redacted, sort_keys=True) + "\n")
+
+    report = validate_agent_trace_corpus(target)
+    report.redaction_counts.update(redaction_counts)
+    return report
 
 
 def _record_to_scenario(record: dict[str, Any], path: Path, line_number: int) -> Scenario:

@@ -1136,7 +1136,7 @@ def blocks(results: dict[str, Any], figures: dict[str, Path]) -> list[tuple[str,
             "Branch: fix/llm-first-pass-json-planning\n"
             "Commit: ac1d2ea\n\n"
             "python -m unittest discover -s tests\n"
-            "# Expected current result: Ran 136 tests, OK\n\n"
+            "# Expected current result: Ran 142 tests, OK\n\n"
             "python run_capsuleguard.py --attack-mode workflow_corpus "
             "--workflow-corpus data/workflow_corpus_splits/test.jsonl "
             "--trials 5 --repetitions 4 --noise-memories 4 --seed 2026 "

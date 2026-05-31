@@ -391,7 +391,7 @@ Branch: fix/llm-first-pass-json-planning
 Commit: ac1d2ea
 
 python -m unittest discover -s tests
-# Expected current result: Ran 136 tests, OK
+# Expected current result: Ran 142 tests, OK
 
 python run_capsuleguard.py --attack-mode workflow_corpus --workflow-corpus data/workflow_corpus_splits/test.jsonl --trials 5 --repetitions 4 --noise-memories 4 --seed 2026 --summary-csv results/workflow_corpus_test_split_summary.csv --trace-jsonl results/workflow_corpus_test_split_traces.jsonl --breakdown-csv results/workflow_corpus_test_split_breakdown.csv --gap-closure-csv results/workflow_corpus_test_split_gap_closure.csv --tool-trace-csv results/workflow_corpus_test_split_tool_traces.csv --charts-dir results/workflow_corpus_test_split_charts
 

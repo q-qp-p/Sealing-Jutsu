@@ -10,7 +10,7 @@
 
 <p align="center">
   <a href="#quick-start"><img alt="Python" src="https://img.shields.io/badge/python-3.10%2B-111827"></a>
-  <a href="#testing"><img alt="Tests" src="https://img.shields.io/badge/tests-136%20passing-1f883d"></a>
+  <a href="#testing"><img alt="Tests" src="https://img.shields.io/badge/tests-142%20passing-1f883d"></a>
   <a href="#current-evidence"><img alt="Held-out ASR" src="https://img.shields.io/badge/held--out%20ASR-0.00%25-0f766e"></a>
   <a href="#honest-limits"><img alt="Scope" src="https://img.shields.io/badge/scope-research%20prototype-7c2d12"></a>
 </p>
@@ -229,6 +229,17 @@ python run_capsuleguard.py \
 
 `trace_corpus` accepts exported JSONL session records with flexible `task`, `events`, `messages`, or `steps` fields. It is the intended path for replacing generated scenarios with real or lab-user traces.
 
+Validate and redact a lab trace corpus before using it:
+
+```bash
+python validate_trace_corpus.py data/raw_lab_traces.jsonl \
+  --redacted-out data/redacted_lab_traces.jsonl \
+  --report-json results/redacted_lab_trace_report.json \
+  --require-redaction
+```
+
+The validator reports total traces, poisoned/benign balance, memory-event counts, source-type coverage, poison-memory labels, and privacy redaction coverage for emails, URLs, phone numbers, and common secret-token shapes.
+
 Generate a fresh workflow corpus:
 
 ```bash
@@ -386,7 +397,7 @@ python -m unittest discover -s tests
 Expected current result:
 
 ```text
-Ran 136 tests
+Ran 142 tests
 OK
 ```
 
@@ -427,6 +438,7 @@ ETHICS.md                      Intended-use and safety guidance
 LICENSE                        MIT license
 run_capsuleguard.py            Main benchmark runner
 generate_workflow_corpus.py    Corpus generation entry point
+validate_trace_corpus.py       Trace-corpus validation and redaction entry point
 ```
 
 Useful live LLM notes:

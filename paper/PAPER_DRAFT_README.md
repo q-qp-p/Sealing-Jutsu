@@ -34,7 +34,7 @@ commit: ac1d2ea
 
 ## Evidence Added In This Refresh
 
-- Unit test expectation updated to `Ran 136 tests`.
+- Unit test expectation updated to `Ran 142 tests`.
 - Medium live LLM planner section added:
   - ambient prompt ASR: `22.22%`
   - capsule-filtered planner tempted: `2.78%`
