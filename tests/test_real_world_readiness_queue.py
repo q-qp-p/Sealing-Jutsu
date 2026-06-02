@@ -7,9 +7,10 @@ import unittest
 from contextlib import redirect_stdout
 from io import StringIO
 from pathlib import Path
+from unittest.mock import patch
 
 from capsule_guard.llm_experiment import run_llm_planner_probe
-from capsule_guard.provenance import ProvenanceLedger
+from capsule_guard.provenance import ImproperlyConfigured, ProvenanceLedger
 from capsule_guard.scenarios import generate_scenarios
 from capsule_guard.sensitivity import run_sensitivity_sweep
 from capsule_guard.tools import RealisticToolSandbox, SafeToolSimulator, write_tool_chain_trace_csv, write_tool_trace_csv
@@ -22,6 +23,19 @@ from experiments.validate_trace_corpus import main as validate_trace_corpus_main
 
 
 class RealWorldReadinessQueueTests(unittest.TestCase):
+    def test_provenance_ledger_requires_secret_when_no_environment_key_is_configured(self) -> None:
+        with patch.dict("os.environ", {}, clear=True):
+            with self.assertRaises(ImproperlyConfigured):
+                ProvenanceLedger()
+
+    def test_provenance_ledger_uses_environment_secret_without_hardcoded_fallback(self) -> None:
+        with patch.dict("os.environ", {"CAPSULE_GUARD_LEDGER_KEY": "env-ledger-secret"}, clear=True):
+            ledger = ProvenanceLedger()
+            ledger.append_event("m1", "memory_compiled", {"authority": 0.25})
+
+        self.assertTrue(ledger.verify())
+        self.assertNotEqual(ledger.secret, b"capsuleguard-local-ledger")
+
     def test_signed_append_only_provenance_ledger_detects_tampering(self) -> None:
         ledger = ProvenanceLedger(secret=b"test-secret")
         event = ledger.append_event(
@@ -46,6 +60,9 @@ class RealWorldReadinessQueueTests(unittest.TestCase):
 
         self.assertEqual(len(rows), 4)
         self.assertTrue(all("attack_success_rate" in row for row in rows))
+        self.assertTrue(all("security_recall" in row for row in rows))
+        self.assertTrue(all("benign_precision" in row for row in rows))
+        self.assertEqual(sum(1 for row in rows if row["recommended"]), 1)
         self.assertLessEqual(max(float(row["attack_success_rate"]) for row in rows), 0.05)
 
     def test_tool_trace_csv_exports_full_action_records(self) -> None:

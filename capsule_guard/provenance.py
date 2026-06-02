@@ -4,8 +4,16 @@ from dataclasses import dataclass
 import hashlib
 import hmac
 import json
+import os
 from pathlib import Path
 from typing import Any
+
+
+LEDGER_KEY_ENV_VARS = ("CAPSULE_GUARD_LEDGER_KEY", "CAPSULEGUARD_LEDGER_KEY")
+
+
+class ImproperlyConfigured(RuntimeError):
+    pass
 
 
 @dataclass(slots=True)
@@ -31,8 +39,8 @@ class ProvenanceEvent:
 
 
 class ProvenanceLedger:
-    def __init__(self, secret: bytes = b"capsuleguard-local-ledger") -> None:
-        self.secret = secret
+    def __init__(self, secret: bytes | str | None = None) -> None:
+        self.secret = _resolve_secret(secret)
         self.events: list[ProvenanceEvent] = []
 
     def append_event(self, memory_id: str, event_type: str, payload: dict[str, Any]) -> ProvenanceEvent:
@@ -83,7 +91,7 @@ class ProvenanceLedger:
                 handle.write(json.dumps(event.as_dict(), sort_keys=True) + "\n")
 
     @classmethod
-    def read_jsonl(cls, input_path: str | Path, secret: bytes = b"capsuleguard-local-ledger") -> ProvenanceLedger:
+    def read_jsonl(cls, input_path: str | Path, secret: bytes | str | None = None) -> ProvenanceLedger:
         ledger = cls(secret=secret)
         path = Path(input_path)
         if not path.exists():
@@ -121,3 +129,20 @@ class ProvenanceLedger:
 def _payload_hash(payload: dict[str, Any]) -> str:
     encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
     return hashlib.sha256(encoded).hexdigest()
+
+
+def _resolve_secret(secret: bytes | str | None) -> bytes:
+    if secret is None:
+        for env_name in LEDGER_KEY_ENV_VARS:
+            configured = os.environ.get(env_name, "").strip()
+            if configured:
+                secret = configured
+                break
+    if secret is None:
+        names = " or ".join(LEDGER_KEY_ENV_VARS)
+        raise ImproperlyConfigured(f"ProvenanceLedger requires an explicit secret or {names}")
+    if isinstance(secret, str):
+        secret = secret.encode("utf-8")
+    if not secret:
+        raise ImproperlyConfigured("ProvenanceLedger secret must not be empty")
+    return secret

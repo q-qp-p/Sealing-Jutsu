@@ -10,7 +10,7 @@
 
 <p align="center">
   <a href="#quick-start"><img alt="Python" src="https://img.shields.io/badge/python-3.10%2B-111827"></a>
-  <a href="#testing"><img alt="Tests" src="https://img.shields.io/badge/tests-145%20passing-1f883d"></a>
+  <a href="#testing"><img alt="Tests" src="https://img.shields.io/badge/tests-147%20passing-1f883d"></a>
   <a href="#current-evidence"><img alt="Held-out ASR" src="https://img.shields.io/badge/held--out%20ASR-0.00%25-0f766e"></a>
   <a href="#honest-limits"><img alt="Scope" src="https://img.shields.io/badge/scope-research%20prototype-7c2d12"></a>
 </p>
