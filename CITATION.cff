@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+title: "Sealing Jutsu: Intent-Bound Memory Capsules for Persistent Agent Poisoning Defense"
+message: "If you use this research prototype, please cite the paper draft and repository."
+type: software
+authors:
+  - family-names: Jain
+    given-names: Akshay
+repository-code: "https://github.com/Mr-Akuma/Sealing-Jutsu"
+date-released: 2026-05-30
+version: "0.1-research-prototype"
+keywords:
+  - LLM agents
+  - memory poisoning
+  - prompt injection
+  - agent security
+  - provenance
+  - least privilege
+license: MIT

@@ -1,0 +1,31 @@
+agent,attack_success_rate,benign_accuracy,cases,false_positive_rate,parse_error_rate,planner_attack_success_rate,poison_sealing_rate,raw_parse_error_rate,scenario,table,unauthorized_risky_action_rate
+ablation_no_denied_actions,0.0,1.0,,0.0,,,0.0,,workflow_corpus_test_split,held_out_workflow,0.0
+ablation_no_quorum,0.0,1.0,,0.0,,,0.08333333333333333,,workflow_corpus_test_split,held_out_workflow,0.0
+ablation_no_topic_scope,0.0,0.5375,,0.041666666666666664,,,0.08333333333333333,,workflow_corpus_test_split,held_out_workflow,0.0
+ambient_memory,0.3333333333333333,1.0,,0.0,,,0.0,,workflow_corpus_test_split,held_out_workflow,0.2222222222222222
+counterfactual_memory,0.03958333333333333,0.9125,,0.0875,,,0.0,,workflow_corpus_test_split,held_out_workflow,0.02638888888888889
+intent_capsules,0.0,1.0,,0.0,,,0.08333333333333333,,workflow_corpus_test_split,held_out_workflow,0.0
+keyword_filter,0.3333333333333333,1.0,,0.0,,,0.0,,workflow_corpus_test_split,held_out_workflow,0.2222222222222222
+output_moderation,0.3333333333333333,1.0,,0.0,,,0.0,,workflow_corpus_test_split,held_out_workflow,0.2222222222222222
+provenance_only,0.24375,0.9625,,0.0,,,0.0,,workflow_corpus_test_split,held_out_workflow,0.1625
+quarantine_only,0.3333333333333333,1.0,,0.0,,,0.0,,workflow_corpus_test_split,held_out_workflow,0.2222222222222222
+trust_score_retrieval,0.24375,0.9625,,0.0,,,0.0,,workflow_corpus_test_split,held_out_workflow,0.1625
+ambient_memory,0.44366666666666665,0.9708333333333333,,0.0,,,0.0,,Generated holdout,stress_scenarios,0.4191358024691358
+provenance_only,0.13133333333333333,0.9625,,0.0,,,0.0,,Generated holdout,stress_scenarios,0.12160493827160494
+intent_capsules,0.0,1.0,,0.0,,,0.12,,Generated holdout,stress_scenarios,0.0
+ambient_memory,0.41363636363636364,0.9722222222222222,,0.0,,,0.0,,Attacker-generated,stress_scenarios,0.39166666666666666
+provenance_only,0.1272727272727273,0.9444444444444444,,0.0,,,0.0,,Attacker-generated,stress_scenarios,0.11666666666666667
+intent_capsules,0.0,1.0,,0.0,,,0.18181818181818182,,Attacker-generated,stress_scenarios,0.0
+ambient_memory,0.17916666666666667,0.9555555555555555,,0.0,,,0.0,,Multimodal/OCR,stress_scenarios,0.18888888888888888
+provenance_only,0.015277777777777777,0.9388888888888889,,0.0,,,0.0,,Multimodal/OCR,stress_scenarios,0.012222222222222223
+intent_capsules,0.0,1.0,,0.0,,,0.25,,Multimodal/OCR,stress_scenarios,0.0
+ambient_memory,0.4,0.9777777777777777,,0.0,,,0.0,,Trusted-source compromise,stress_scenarios,0.46574074074074073
+provenance_only,0.2811111111111111,0.95,,0.0,,,0.0,,Trusted-source compromise,stress_scenarios,0.3453703703703704
+intent_capsules,0.0,1.0,,0.0,,,0.13333333333333333,,Trusted-source compromise,stress_scenarios,0.0
+ambient_memory,0.17407407407407408,0.9777777777777779,,0.0,,,0.0,,Advanced suite,stress_scenarios,0.15
+provenance_only,0.025925925925925925,0.9666666666666667,,0.0,,,0.0,,Advanced suite,stress_scenarios,0.019444444444444445
+intent_capsules,0.0,1.0,,0.0,,,0.3888888888888889,,Advanced suite,stress_scenarios,0.0
+ambient_prompt,0.2222222222222222,,108.0,,0.0,0.2222222222222222,,0.0,workflow_corpus_live_planner,medium_live_llm,0.2222222222222222
+capsule_filtered_prompt,0.0,,108.0,,0.0,0.027777777777777776,,0.0,workflow_corpus_live_planner,medium_live_llm,0.0
+ambient_prompt,0.5666666666666667,,90.0,,0.2,0.5666666666666667,,0.2,high_cost_local_smoke,high_cost_local_smoke,0.5666666666666667
+capsule_filtered_prompt,0.0,,90.0,,0.2,0.23333333333333334,,0.2,high_cost_local_smoke,high_cost_local_smoke,0.0
