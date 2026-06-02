@@ -117,6 +117,12 @@ def write_sensitivity_charts(rows: list[dict[str, object]], charts_dir: str | Pa
         metric="benign_accuracy",
         title="Sensitivity Benign Accuracy",
     )
+    write_bar_chart(
+        chart_rows,
+        path / "sensitivity_calibration_score.svg",
+        metric="calibration_score",
+        title="Sensitivity Calibration Score",
+    )
 
 
 def _security_recall(attack_success_rate: float) -> float:

@@ -170,6 +170,14 @@ Gap-closure comparison:
 
 How to read this: the LLM can still be tempted internally, which is realistic. The safety goal is that unauthorized temptation does not become an accepted recommendation or tool action. In the gap-fixed medium run, every tempted defended plan was blocked before final action.
 
+Threshold calibration snapshot, committed in `results/current_main_threshold_calibration.csv`:
+
+| Sweep | Rows | ASR | Risky action | Benign accuracy | FPR | Calibration score |
+|---|---:|---:|---:|---:|---:|---:|
+| Current main generated-holdout sweep | 16 | 0.00% | 0.00% | 100.00% | 0.00% | 1.00 |
+
+The sweep varies medium-risk quorum and topic-scope thresholds across 16 settings and also writes SVG charts under `results/current_main_threshold_calibration_charts/`. This closes the prototype-level "hand-tuned only" gap inside the simulator. It does not replace calibration on external benign and adversarial workloads.
+
 ## What The Hardened Tests Cover
 
 The default and corpus benchmarks are designed to stress more than simple keyword attacks:
@@ -273,7 +281,15 @@ python run_capsuleguard.py --attack-mode attacker_generated
 Sensitivity sweep:
 
 ```bash
-python run_sensitivity.py --attack-mode generated_holdout
+python run_sensitivity.py \
+  --attack-mode generated_holdout \
+  --repetitions 4 \
+  --noise-memories 8 \
+  --seed 2026 \
+  --medium-thresholds 0.45,0.55,0.70,0.85 \
+  --topic-thresholds 0.08,0.12,0.18,0.24 \
+  --csv results/current_main_threshold_calibration.csv \
+  --charts-dir results/current_main_threshold_calibration_charts
 ```
 
 LLM-provider experiment harness:
@@ -461,5 +477,5 @@ This is a research prototype. The current evidence is strong inside the simulato
 2. The default high-volume benchmark still uses a deterministic planner. The live LLM planner study now has a committed 216-row workflow-corpus run, but larger multi-seed live LLM runs are still needed for high-confidence statistical claims.
 3. OCR and multimodal attacks are represented as extracted text, not full raw-image pipelines.
 4. Source labels are modeled as metadata; real deployments need signed, append-only provenance.
-5. Policy thresholds are still research parameters and need calibration on real workloads.
+5. Policy thresholds now have simulator calibration evidence, but still need calibration on real external benign and adversarial workloads.
 6. Real browser, email, database, and account side effects should be tested in isolated sandboxes before deployment claims.

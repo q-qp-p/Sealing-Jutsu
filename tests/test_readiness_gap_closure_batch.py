@@ -79,11 +79,13 @@ class ReadinessGapClosureBatchTests(unittest.TestCase):
                 written = list(csv.DictReader(handle))
             attack_chart_exists = (charts_dir / "sensitivity_attack_success_rate.svg").exists()
             benign_chart_exists = (charts_dir / "sensitivity_benign_accuracy.svg").exists()
+            calibration_chart_exists = (charts_dir / "sensitivity_calibration_score.svg").exists()
 
         self.assertEqual(len(rows), 4)
         self.assertEqual(len(written), 4)
         self.assertTrue(attack_chart_exists)
         self.assertTrue(benign_chart_exists)
+        self.assertTrue(calibration_chart_exists)
 
     def test_generated_holdout_has_larger_diverse_attack_family(self) -> None:
         cases = generate_scenarios(repetitions=1, noise_memories=0, seed=2026, attack_mode="generated_holdout")

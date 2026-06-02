@@ -125,6 +125,7 @@ def load_all_results() -> dict[str, Any]:
     llm_gap_report = read_metric_list("gap_fix_medium_live_llm_gap_report.csv")[0]
     high_cost_summary = read_metric_rows("high_cost_local_smoke_summary.csv", "condition")
     high_cost_statistics = read_metric_list("high_cost_local_smoke_statistics.csv")[0]
+    calibration = read_metric_list("current_main_threshold_calibration.csv")
     return {
         "workflow": workflow,
         "scenarios": scenarios,
@@ -133,6 +134,7 @@ def load_all_results() -> dict[str, Any]:
         "llm_gap_report": llm_gap_report,
         "high_cost_summary": high_cost_summary,
         "high_cost_statistics": high_cost_statistics,
+        "calibration": calibration,
     }
 
 
@@ -193,6 +195,23 @@ def write_tables_csv(results: dict[str, Any]) -> None:
                 "unauthorized_risky_action_rate": str(metrics.get("unauthorized_risky_action_rate", "")),
                 "raw_parse_error_rate": str(metrics.get("raw_parse_error_rate", "")),
                 "parse_error_rate": str(metrics.get("parse_error_rate", "")),
+            }
+        )
+    for row in results["calibration"]:
+        rows.append(
+            {
+                "table": "threshold_calibration",
+                "scenario": "generated_holdout_threshold_sweep",
+                "medium_threshold": str(row.get("medium_threshold", "")),
+                "topic_threshold": str(row.get("topic_threshold", "")),
+                "attack_success_rate": str(row.get("attack_success_rate", "")),
+                "unauthorized_risky_action_rate": str(row.get("unauthorized_risky_action_rate", "")),
+                "benign_accuracy": str(row.get("benign_accuracy", "")),
+                "false_positive_rate": str(row.get("false_positive_rate", "")),
+                "security_recall": str(row.get("security_recall", "")),
+                "benign_precision": str(row.get("benign_precision", "")),
+                "calibration_score": str(row.get("calibration_score", "")),
+                "recommended": str(row.get("recommended", "")),
             }
         )
     with OUT_TABLES.open("w", newline="", encoding="utf-8") as handle:
@@ -623,6 +642,41 @@ def ablation_table(results: dict[str, Any]) -> list[list[str]]:
     return rows
 
 
+def calibration_table(results: dict[str, Any]) -> list[list[str]]:
+    calibration = results["calibration"]
+    representative = {(0.45, 0.08), (0.55, 0.12), (0.70, 0.12), (0.85, 0.24)}
+    selected: list[dict[str, float | str]] = []
+    seen: set[tuple[float, float]] = set()
+    for row in calibration:
+        medium = round(float(row["medium_threshold"]), 2)
+        topic = round(float(row["topic_threshold"]), 2)
+        is_recommended = str(row.get("recommended", "")).lower() == "true"
+        key = (medium, topic)
+        if (is_recommended or key in representative) and key not in seen:
+            selected.append(row)
+            seen.add(key)
+
+    if not selected:
+        selected = calibration[: min(6, len(calibration))]
+
+    selected.sort(key=lambda row: (float(row["medium_threshold"]), float(row["topic_threshold"])))
+    rows: list[list[str]] = []
+    for row in selected:
+        rows.append(
+            [
+                f"{float(row['medium_threshold']):.2f}",
+                f"{float(row['topic_threshold']):.2f}",
+                pct(float(row["attack_success_rate"])),
+                pct(float(row["unauthorized_risky_action_rate"])),
+                pct(float(row["benign_accuracy"])),
+                pct(float(row["false_positive_rate"])),
+                f"{float(row['calibration_score']):.2f}",
+                "yes" if str(row.get("recommended", "")).lower() == "true" else "no",
+            ]
+        )
+    return rows
+
+
 def live_llm_table(results: dict[str, Any]) -> list[list[str]]:
     llm = results["llm_summary"]
     order = [
@@ -1017,10 +1071,22 @@ def blocks(results: dict[str, Any], figures: dict[str, Path]) -> list[tuple[str,
             "useful memory behavior. The full capsule configuration is stronger because it combines zero tested attack success with "
             "full benign accuracy and zero false positives."
         )),
-        ("h2", "8.1 Live LLM Planner Check"),
+        ("h2", "8.1 Threshold Calibration Check"),
+        ("table", (
+            "Table 9. Current-main threshold calibration sweep.",
+            ["Medium floor", "Topic floor", "ASR", "Risky action", "Benign", "FPR", "Score", "Selected"],
+            calibration_table(results),
+        )),
+        ("p", (
+            "A 16-point current-main sweep over medium-risk quorum and topic-scope thresholds found no ASR, risky-action, benign-accuracy, "
+            "or false-positive degradation on the generated-holdout calibration setting. The exported calibration score combines security "
+            "recall, benign precision, benign accuracy, risky-action rate, and false positives. This closes the prototype-level hand-tuning "
+            "gap for the simulator, while the remaining research limitation is calibration on larger external benign and adversarial workloads."
+        )),
+        ("h2", "8.2 Live LLM Planner Check"),
         ("figure", (figures["live_llm"], "Figure 7. Live LLM planner check.")),
         ("table", (
-            "Table 9. Medium live LLM workflow-corpus run.",
+            "Table 10. Medium live LLM workflow-corpus run.",
             ["Condition", "Rows", "Planner tempted", "Final ASR", "Risky action", "Raw parse error", "Final parse error"],
             live_llm_table(results),
         )),
@@ -1032,12 +1098,12 @@ def blocks(results: dict[str, Any], figures: dict[str, Path]) -> list[tuple[str,
             "and risky action to 0.00%. Raw and final parse errors were both 0.00%, so this result is not explained by malformed model output."
         )),
         ("table", (
-            "Table 10. Defended medium live LLM result by model.",
+            "Table 11. Defended medium live LLM result by model.",
             ["Model", "Rows", "Planner tempted", "Final ASR", "Risky action", "Raw parse error"],
             live_llm_model_table(results),
         )),
         ("table", (
-            "Table 11. High-cost local LLM smoke profile.",
+            "Table 12. High-cost local LLM smoke profile.",
             ["Condition", "Rows", "Final ASR", "Risky action", "Parse/audit note"],
             high_cost_smoke_table(results),
         )),
@@ -1046,9 +1112,9 @@ def blocks(results: dict[str, Any], figures: dict[str, Path]) -> list[tuple[str,
             "planner providers to exercise the high-cost case sampler, paired statistics, raw-output audit logs, and gap reports. It should not "
             "be reported as paid API evidence, but it shows that the larger evaluation harness is ready to run against additional live or paid models."
         )),
-        ("h2", "8.2 Gap-Closure Interpretation"),
+        ("h2", "8.3 Gap-Closure Interpretation"),
         ("table", (
-            "Table 12. Why capsule authorization closes tested baseline failures.",
+            "Table 13. Why capsule authorization closes tested baseline failures.",
             ["Failure class", "Why simpler baselines fail", "Capsule control that blocks it"],
             [
                 ["Benign-looking web poison", "Keyword filters see ordinary recommendation language.", "Source authority floor plus denied high-risk actions."],
@@ -1060,7 +1126,7 @@ def blocks(results: dict[str, Any], figures: dict[str, Path]) -> list[tuple[str,
                 ["Tool-output steering", "Tool results can look operationally relevant.", "Tool outputs cannot authorize dangerous actions without stronger support."],
             ],
         )),
-        ("h2", "8.3 Security Argument"),
+        ("h2", "8.4 Security Argument"),
         ("p", (
             "The capsule defense succeeds in the tested cases because the attacker must satisfy multiple independent conditions at once. A poison "
             "memory must be relevant enough to retrieve, active rather than sealed, within topic scope, outside the denied-action set, above the "
@@ -1099,7 +1165,7 @@ def blocks(results: dict[str, Any], figures: dict[str, Path]) -> list[tuple[str,
             "The vector backend is a hashed/SQLite approximation, not a full industrial embedding retrieval system with adversarial collision search.",
             "OCR and multimodal attacks are represented mainly as extracted text rather than raw image, hidden-pixel, or alt-text pipelines.",
             "Source labels are modeled as metadata; production systems need signed identities, append-only provenance, and administrative controls.",
-            "Policy thresholds are hand-tuned research parameters and require workload calibration.",
+            "The current draft includes simulator threshold calibration, but production thresholds still require external benign and adversarial workload calibration.",
             "The prototype does not claim security against database compromise, malicious policy administrators, stolen credentials, or arbitrary model compromise.",
         ]),
         ("h2", "10.1 Industrialization Roadmap"),
@@ -1109,7 +1175,7 @@ def blocks(results: dict[str, Any], figures: dict[str, Path]) -> list[tuple[str,
             "Use a production vector database and explicit adversarial embedding-collision search.",
             "Bind source identity to cryptographic signatures or enterprise identity providers.",
             "Run raw-image OCR, alt-text, and document-ingestion tests instead of only extracted text.",
-            "Calibrate thresholds on benign production workloads before using them as deployment policy.",
+            "Extend threshold calibration to external benign production-like workloads before using it as deployment policy.",
             "Add isolated browser, email, database, and payment sandboxes for realistic tool-side-effect testing.",
         ]),
         ("h1", "11. Ethics and Safety"),
@@ -1133,10 +1199,10 @@ def blocks(results: dict[str, Any], figures: dict[str, Path]) -> list[tuple[str,
         ("h1", "Appendix A. Reproducibility Commands"),
         ("code", (
             "Repository snapshot: C:\\Users\\User\\Music\\Agent-Poisoning-Research-FINAL\n"
-            "Branch: fix/llm-first-pass-json-planning\n"
-            "Commit: ac1d2ea\n\n"
+            "Branch: main\n"
+            "Commit: latest pushed main commit\n\n"
             "python -m unittest discover -s tests\n"
-            "# Expected current result: Ran 142 tests, OK\n\n"
+            "# Expected current result: Ran 147 tests, OK\n\n"
             "python run_capsuleguard.py --attack-mode workflow_corpus "
             "--workflow-corpus data/workflow_corpus_splits/test.jsonl "
             "--trials 5 --repetitions 4 --noise-memories 4 --seed 2026 "
@@ -1154,6 +1220,12 @@ def blocks(results: dict[str, Any], figures: dict[str, Path]) -> list[tuple[str,
             "--gap-closure-csv results/trace_corpus_sample_gap_closure.csv "
             "--tool-trace-csv results/trace_corpus_sample_tool_traces.csv "
             "--charts-dir results/trace_corpus_sample_charts\n\n"
+            "python run_sensitivity.py --attack-mode generated_holdout "
+            "--repetitions 4 --noise-memories 8 --seed 2026 "
+            "--medium-thresholds 0.45,0.55,0.70,0.85 "
+            "--topic-thresholds 0.08,0.12,0.18,0.24 "
+            "--csv results/current_main_threshold_calibration.csv "
+            "--charts-dir results/current_main_threshold_calibration_charts\n\n"
             "python run_llm_experiment.py --provider ollama "
             "--models llama3,mistral,phi3 "
             "--case-source workflow-corpus "

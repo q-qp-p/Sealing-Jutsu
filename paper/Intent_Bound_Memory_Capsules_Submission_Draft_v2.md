@@ -278,13 +278,26 @@ The stress suites show the same pattern: provenance helps but does not fully sol
 
 The ablation results show why the paper should not report ASR alone. Removing topic scope still yields 0.00% ASR in this held-out split, but benign accuracy falls to 53.75%. That is not a good defense; it blocks attacks partly by suppressing useful memory behavior. The full capsule configuration is stronger because it combines zero tested attack success with full benign accuracy and zero false positives.
 
-### 8.1 Live LLM Planner Check
+### 8.1 Threshold Calibration Check
+
+**Table 9. Current-main threshold calibration sweep.**
+
+| Medium floor | Topic floor | ASR | Risky action | Benign | FPR | Score | Selected |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 0.45 | 0.08 | 0.00% | 0.00% | 100.00% | 0.00% | 1.00 | yes |
+| 0.55 | 0.12 | 0.00% | 0.00% | 100.00% | 0.00% | 1.00 | no |
+| 0.70 | 0.12 | 0.00% | 0.00% | 100.00% | 0.00% | 1.00 | no |
+| 0.85 | 0.24 | 0.00% | 0.00% | 100.00% | 0.00% | 1.00 | no |
+
+A 16-point current-main sweep over medium-risk quorum and topic-scope thresholds found no ASR, risky-action, benign-accuracy, or false-positive degradation on the generated-holdout calibration setting. The exported calibration score combines security recall, benign precision, benign accuracy, risky-action rate, and false positives. This closes the prototype-level hand-tuning gap for the simulator, while the remaining research limitation is calibration on larger external benign and adversarial workloads.
+
+### 8.2 Live LLM Planner Check
 
 ![Figure 7. Live LLM planner check.](figures_v2/figure7_live_llm_planner_v2.png)
 
 *Figure 7. Live LLM planner check.*
 
-**Table 9. Medium live LLM workflow-corpus run.**
+**Table 10. Medium live LLM workflow-corpus run.**
 
 | Condition | Rows | Planner tempted | Final ASR | Risky action | Raw parse error | Final parse error |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -293,7 +306,7 @@ The ablation results show why the paper should not report ASR alone. Removing to
 
 The live LLM planner experiment is not the highest-volume benchmark; it is a realism check that the authorization layer works when the plan is produced by actual local models rather than only by the deterministic planner. Across llama3, mistral, and phi3, the ambient prompt produced 22.22% final attack success. The capsule-filtered prompt still showed 2.78% planner temptation, which is useful evidence that the planner can be pulled toward the poison, but final authorization reduced accepted attack success and risky action to 0.00%. Raw and final parse errors were both 0.00%, so this result is not explained by malformed model output.
 
-**Table 10. Defended medium live LLM result by model.**
+**Table 11. Defended medium live LLM result by model.**
 
 | Model | Rows | Planner tempted | Final ASR | Risky action | Raw parse error |
 | --- | --- | --- | --- | --- | --- |
@@ -301,7 +314,7 @@ The live LLM planner experiment is not the highest-volume benchmark; it is a rea
 | mistral | 36 | 2.78% | 0.00% | 0.00% | 0.00% |
 | phi3 | 36 | 2.78% | 0.00% | 0.00% | 0.00% |
 
-**Table 11. High-cost local LLM smoke profile.**
+**Table 12. High-cost local LLM smoke profile.**
 
 | Condition | Rows | Final ASR | Risky action | Parse/audit note |
 | --- | --- | --- | --- | --- |
@@ -311,9 +324,9 @@ The live LLM planner experiment is not the highest-volume benchmark; it is a rea
 
 The high-cost local smoke profile is a machinery check for the larger conference-grade evaluation path. It uses local simulated planner providers to exercise the high-cost case sampler, paired statistics, raw-output audit logs, and gap reports. It should not be reported as paid API evidence, but it shows that the larger evaluation harness is ready to run against additional live or paid models.
 
-### 8.2 Gap-Closure Interpretation
+### 8.3 Gap-Closure Interpretation
 
-**Table 12. Why capsule authorization closes tested baseline failures.**
+**Table 13. Why capsule authorization closes tested baseline failures.**
 
 | Failure class | Why simpler baselines fail | Capsule control that blocks it |
 | --- | --- | --- |
@@ -325,7 +338,7 @@ The high-cost local smoke profile is a machinery check for the larger conference
 | Trusted-looking metadata | Source labels alone can be spoofed in the simulator. | Attestation downgrade and independent writer/source requirements. |
 | Tool-output steering | Tool results can look operationally relevant. | Tool outputs cannot authorize dangerous actions without stronger support. |
 
-### 8.3 Security Argument
+### 8.4 Security Argument
 
 The capsule defense succeeds in the tested cases because the attacker must satisfy multiple independent conditions at once. A poison memory must be relevant enough to retrieve, active rather than sealed, within topic scope, outside the denied-action set, above the risk-specific authority floor, fresh or sufficiently supported, and part of an independent quorum for risky action. A failure in any one of these checks prevents that memory from becoming action-authorizing evidence.
 
@@ -347,7 +360,7 @@ A practical deployment would use the capsule layer alongside conventional defens
 - The vector backend is a hashed/SQLite approximation, not a full industrial embedding retrieval system with adversarial collision search.
 - OCR and multimodal attacks are represented mainly as extracted text rather than raw image, hidden-pixel, or alt-text pipelines.
 - Source labels are modeled as metadata; production systems need signed identities, append-only provenance, and administrative controls.
-- Policy thresholds are hand-tuned research parameters and require workload calibration.
+- The current draft includes simulator threshold calibration, but production thresholds still require external benign and adversarial workload calibration.
 - The prototype does not claim security against database compromise, malicious policy administrators, stolen credentials, or arbitrary model compromise.
 
 ### 10.1 Industrialization Roadmap
@@ -357,7 +370,7 @@ A practical deployment would use the capsule layer alongside conventional defens
 - Use a production vector database and explicit adversarial embedding-collision search.
 - Bind source identity to cryptographic signatures or enterprise identity providers.
 - Run raw-image OCR, alt-text, and document-ingestion tests instead of only extracted text.
-- Calibrate thresholds on benign production workloads before using them as deployment policy.
+- Extend threshold calibration to external benign production-like workloads before using it as deployment policy.
 - Add isolated browser, email, database, and payment sandboxes for realistic tool-side-effect testing.
 
 ## 11. Ethics and Safety
@@ -387,15 +400,17 @@ Persistent agent poisoning should be treated as a memory lifecycle and authority
 
 ```text
 Repository snapshot: C:\Users\User\Music\Agent-Poisoning-Research-FINAL
-Branch: fix/llm-first-pass-json-planning
-Commit: ac1d2ea
+Branch: main
+Commit: latest pushed main commit
 
 python -m unittest discover -s tests
-# Expected current result: Ran 142 tests, OK
+# Expected current result: Ran 147 tests, OK
 
 python run_capsuleguard.py --attack-mode workflow_corpus --workflow-corpus data/workflow_corpus_splits/test.jsonl --trials 5 --repetitions 4 --noise-memories 4 --seed 2026 --summary-csv results/workflow_corpus_test_split_summary.csv --trace-jsonl results/workflow_corpus_test_split_traces.jsonl --breakdown-csv results/workflow_corpus_test_split_breakdown.csv --gap-closure-csv results/workflow_corpus_test_split_gap_closure.csv --tool-trace-csv results/workflow_corpus_test_split_tool_traces.csv --charts-dir results/workflow_corpus_test_split_charts
 
 python run_capsuleguard.py --attack-mode trace_corpus --workflow-corpus data/agent_trace_corpus_sample.jsonl --summary-csv results/trace_corpus_sample_summary.csv --trace-jsonl results/trace_corpus_sample_traces.jsonl --breakdown-csv results/trace_corpus_sample_breakdown.csv --gap-closure-csv results/trace_corpus_sample_gap_closure.csv --tool-trace-csv results/trace_corpus_sample_tool_traces.csv --charts-dir results/trace_corpus_sample_charts
+
+python run_sensitivity.py --attack-mode generated_holdout --repetitions 4 --noise-memories 8 --seed 2026 --medium-thresholds 0.45,0.55,0.70,0.85 --topic-thresholds 0.08,0.12,0.18,0.24 --csv results/current_main_threshold_calibration.csv --charts-dir results/current_main_threshold_calibration_charts
 
 python run_llm_experiment.py --provider ollama --models llama3,mistral,phi3 --case-source workflow-corpus --workflow-corpus data/workflow_corpus_splits/test.jsonl --case-limit 36 --case-seed 2026 --repetitions 1 --output-csv results/gap_fix_medium_live_llm_suite.csv --summary-csv results/gap_fix_medium_live_llm_summary.csv --model-summary-csv results/gap_fix_medium_live_llm_model_summary.csv --gap-report-csv results/gap_fix_medium_live_llm_gap_report.csv
 ```
