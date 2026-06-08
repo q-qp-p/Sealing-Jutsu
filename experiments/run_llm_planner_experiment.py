@@ -4,7 +4,13 @@ import argparse
 import json
 import os
 from pathlib import Path
+import sys
 from urllib import request
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(REPO_ROOT) in sys.path:
+    sys.path.remove(str(REPO_ROOT))
+sys.path.insert(0, str(REPO_ROOT))
 
 from capsule_guard.llm_experiment import (
     LLMExperimentCase,
@@ -80,7 +86,10 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--gap-report-csv", type=Path, default=None)
     parser.add_argument(
         "--high-cost-attack-modes",
-        default="workflow_corpus,generated_holdout,adaptive_loop,advanced_attack_suite,attacker_generated",
+        default=(
+            "workflow_corpus,generated_holdout,adaptive_loop,advanced_attack_suite,"
+            "memory_lifecycle_gap,attacker_generated"
+        ),
         help="Comma-separated attack modes mixed when --case-source high-cost.",
     )
     parser.add_argument(

@@ -112,6 +112,11 @@ class CompleteRunnerLLMIntegrationTests(unittest.TestCase):
         self.assertEqual(args.llm_statistics_csv.name, "high_cost_statistics.csv")
         self.assertEqual(args.llm_gap_report_csv.name, "high_cost_gap_report.csv")
 
+    def test_complete_runner_high_cost_default_includes_memory_lifecycle_gap(self) -> None:
+        args = build_parser().parse_args(["--include-llm-planner", "--llm-case-source", "high-cost"])
+
+        self.assertIn("memory_lifecycle_gap", args.llm_high_cost_attack_modes.split(","))
+
     def test_complete_runner_writes_llm_planner_outputs(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             output_dir = Path(temp_dir)

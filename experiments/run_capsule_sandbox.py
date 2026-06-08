@@ -202,7 +202,10 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--llm-gap-report-csv", type=Path, default=None)
     parser.add_argument(
         "--llm-high-cost-attack-modes",
-        default="workflow_corpus,generated_holdout,adaptive_loop,advanced_attack_suite,attacker_generated",
+        default=(
+            "workflow_corpus,generated_holdout,adaptive_loop,advanced_attack_suite,"
+            "memory_lifecycle_gap,attacker_generated"
+        ),
     )
     parser.add_argument("--llm-high-cost-seeds", default="2026,2027,2028")
     parser.add_argument("--llm-high-cost-cases-per-mode-seed", type=int, default=25)

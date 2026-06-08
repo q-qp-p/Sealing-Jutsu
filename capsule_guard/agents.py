@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+from capsule_guard.config import load_security_policy_config
 from capsule_guard.compiler import CapsuleCompiler
 from capsule_guard.intent import IntentParser
 from capsule_guard.models import CapsuleDecision, CapsuleStatus, MemoryCapsule, MemorySeed
@@ -80,6 +81,25 @@ class OutputModerationAgent(AmbientMemoryAgent):
         if decision.plan.action_risk.value == "high":
             decision.allowed = False
             decision.reason = "output_moderation_blocked_high_risk_action"
+        return decision
+
+
+class SemanticOutputJudgeAgent(OutputModerationAgent):
+    def __init__(self) -> None:
+        super().__init__()
+        self.approved_recommendations = load_security_policy_config().approved_recommendations
+
+    def answer(self, query: str) -> CapsuleDecision:
+        decision = super().answer(query)
+        if not decision.allowed:
+            return decision
+        if decision.plan.recommendation == "ambiguous_recommendation":
+            decision.allowed = False
+            decision.reason = "semantic_output_judge_blocked_ambiguous_recommendation"
+            return decision
+        if decision.plan.recommendation not in self.approved_recommendations:
+            decision.allowed = False
+            decision.reason = "semantic_output_judge_blocked_unapproved_recommendation"
         return decision
 
 

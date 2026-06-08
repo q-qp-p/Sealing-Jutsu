@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+import subprocess
+import sys
+from pathlib import Path
+from tempfile import TemporaryDirectory
 import unittest
 
 from experiments.run_llm_planner_experiment import build_llm_cases, build_parser, build_providers
@@ -109,6 +113,45 @@ class LLMExperimentCliTests(unittest.TestCase):
         self.assertEqual(args.audit_jsonl.name, "high_cost_audit.jsonl")
         self.assertEqual(args.statistics_csv.name, "high_cost_statistics.csv")
         self.assertEqual(args.gap_report_csv.name, "high_cost_gap_report.csv")
+
+    def test_high_cost_default_includes_memory_lifecycle_gap(self) -> None:
+        args = build_parser().parse_args(["--case-source", "high-cost"])
+
+        self.assertIn("memory_lifecycle_gap", args.high_cost_attack_modes.split(","))
+
+    def test_direct_script_execution_uses_local_lifecycle_gap_mode(self) -> None:
+        with TemporaryDirectory() as temp_dir:
+            output_dir = Path(temp_dir)
+            completed = subprocess.run(
+                [
+                    sys.executable,
+                    "experiments/run_llm_planner_experiment.py",
+                    "--provider",
+                    "local",
+                    "--models",
+                    "strict_safe",
+                    "--case-source",
+                    "high-cost",
+                    "--high-cost-attack-modes",
+                    "memory_lifecycle_gap",
+                    "--high-cost-seeds",
+                    "2026",
+                    "--high-cost-cases-per-mode-seed",
+                    "1",
+                    "--output-csv",
+                    str(output_dir / "suite.csv"),
+                    "--summary-csv",
+                    str(output_dir / "summary.csv"),
+                    "--model-summary-csv",
+                    str(output_dir / "model_summary.csv"),
+                ],
+                cwd=Path(__file__).resolve().parents[1],
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
+
+        self.assertEqual(completed.returncode, 0, completed.stderr)
 
     def test_cli_accepts_openai_responses_provider_for_codex_models(self) -> None:
         args = build_parser().parse_args(

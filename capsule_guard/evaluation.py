@@ -18,6 +18,7 @@ from capsule_guard.agents import (
     OutputModerationAgent,
     ProvenanceOnlyAgent,
     QuarantineOnlyAgent,
+    SemanticOutputJudgeAgent,
     TrustScoreRetrievalAgent,
 )
 from capsule_guard.metrics import Metrics
@@ -86,6 +87,7 @@ def default_agent_factories(include_ablations: bool = True) -> list[tuple[str, A
         ("quarantine_only", QuarantineOnlyAgent),
         ("trust_score_retrieval", TrustScoreRetrievalAgent),
         ("output_moderation", OutputModerationAgent),
+        ("semantic_output_judge", SemanticOutputJudgeAgent),
         ("counterfactual_memory", CounterfactualMemoryAgent),
         ("provenance_only", ProvenanceOnlyAgent),
         ("intent_capsules", CapsuleAgent),
