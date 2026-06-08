@@ -882,11 +882,124 @@ def blocks(results: dict[str, Any], figures: dict[str, Path]) -> list[tuple[str,
         ]),
         ("h2", "4.2 Attacker Capabilities"),
         ("p", (
-            "The attacker may influence memories through web content, OCR-extracted text, tool output, agent-generated summaries, "
-            "experience logs, query-only interaction, delayed triggers, semantic paraphrases, retrieval collisions, or trusted-looking "
-            "but unattested metadata. The attacker tries to cause a future query to retrieve and act on the poisoned memory."
+            "The adversary is a memory-poisoning attacker, not a code-execution attacker. The attacker can cause untrusted or "
+            "weakly trusted content to enter the agent's memory lifecycle, wait for that content to be retrieved in a later task, "
+            "and attempt to turn retrieved data into planning authority."
         )),
-        ("h2", "4.3 Out-of-Scope Capabilities"),
+        ("table", (
+            "Table 2. Formal attacker capabilities and limits.",
+            ["Capability", "In scope", "Explicit limit"],
+            [
+                [
+                    "Injection channel",
+                    "The attacker can inject text through web pages, tool outputs, OCR-extracted documents, alt text, user-visible documents, experience logs, summaries, or memory import paths.",
+                    "The attacker cannot directly edit system prompts, policy code, the capsule authorization gate, or benchmark labels.",
+                ],
+                [
+                    "Persistence",
+                    "The attacker may create delayed-trigger or cross-session poison that is stored today and activated by a later user query.",
+                    "The attacker cannot delete audit records or force the memory store to ignore capsule status transitions.",
+                ],
+                [
+                    "Semantic adaptation",
+                    "The attacker may paraphrase instructions, split payloads across memories, use benign-looking wording, or craft retrieval-collision text.",
+                    "The attacker cannot forge cryptographic provenance, verified-writer identity, or independent corroboration without compromising those systems.",
+                ],
+                [
+                    "Tool and OCR manipulation",
+                    "The attacker may place malicious instructions inside tool-return text or OCR-visible content that the agent might summarize or store.",
+                    "The attacker cannot directly compromise the tool runtime, OCR engine binary, or external service credentials.",
+                ],
+                [
+                    "Goal",
+                    "The attacker aims to alter a recommendation, planning path, memory-derived preference, or medium/high-risk tool action toward an attacker-preferred outcome.",
+                    "The attacker is not assumed to seek denial-of-service, model-weight compromise, or arbitrary host code execution in this prototype.",
+                ],
+            ],
+        )),
+        ("h2", "4.3 Trust Boundaries and Assumptions"),
+        ("p", (
+            "The core trust boundary is between retrieved memory as relevance evidence and retrieved memory as authority. The memory "
+            "database, vector retriever, OCR pipeline, browser/tool outputs, and agent summaries are treated as partially untrusted "
+            "inputs. The capsule compiler and policy gate are inside the trusted computing base for this prototype."
+        )),
+        ("table", (
+            "Table 3. Threat-model assumptions.",
+            ["Assumption", "Reason"],
+            [
+                [
+                    "Policy code and capsule gate execute as implemented.",
+                    "The paper evaluates memory authorization, not host compromise or malicious maintainers.",
+                ],
+                [
+                    "Source labels may be noisy, but cryptographic attestations and verified writers cannot be forged in-scope.",
+                    "This lets the benchmark test provenance distrust while preserving a meaningful root of trust.",
+                ],
+                [
+                    "Similarity retrieval can return malicious memories.",
+                    "The defense must not rely on vector retrieval being safe; retrieval is treated as candidate selection only.",
+                ],
+                [
+                    "The planner may be tempted by malicious context.",
+                    "The evaluation separates planner influence from final action acceptance using poison influence rate and ASR.",
+                ],
+                [
+                    "High-impact actions require explicit authorization evidence.",
+                    "This models least-privilege operation for email, purchase, deletion, data sharing, and tool-chain changes.",
+                ],
+            ],
+        )),
+        ("h2", "4.4 Security Objectives and Success Criteria"),
+        ("bullets", [
+            "Prevent unauthorized influence: poisoned memory should not be able to determine the selected recommendation, plan, or tool path.",
+            "Prevent unsafe execution: poisoned memory should not cause medium/high-risk actions such as email, purchase, delete, transfer, or data sharing.",
+            "Preserve benign utility: legitimate memories should still support normal personalization and task completion.",
+            "Keep poisoning auditable: suspicious records should be sealed, rejected, or traceable rather than silently discarded.",
+            "Expose late-blocking defenses: metrics should distinguish final output blocking from memory influence before the output gate.",
+        ]),
+        ("h2", "4.5 STRIDE and OWASP LLM Mapping"),
+        ("table", (
+            "Table 4. Threat categories covered by the model.",
+            ["Category", "Agent-memory threat", "Capsule control"],
+            [
+                [
+                    "Spoofing",
+                    "Untrusted memory pretends to be user preference, verified experience, or trusted tool output.",
+                    "Source authority, writer identity, verification count, and lineage checks.",
+                ],
+                [
+                    "Tampering",
+                    "Stored memory, summaries, or derived experiences alter future planning context.",
+                    "Append-only provenance, capsule status, denied actions, and parent authority caps.",
+                ],
+                [
+                    "Repudiation",
+                    "The system cannot explain why a poisoned memory was used or blocked.",
+                    "Policy traces, sealed status, and attack-breakdown reporting.",
+                ],
+                [
+                    "Information disclosure",
+                    "Poisoned memory steers the agent to email or reveal private data.",
+                    "Risk-aware action authorization and evidence quorum for data-sharing actions.",
+                ],
+                [
+                    "Denial of service",
+                    "Overly broad blocking damages benign memory usefulness.",
+                    "Benign accuracy and false-positive rate are measured alongside ASR.",
+                ],
+                [
+                    "Elevation of privilege",
+                    "A low-authority memory becomes action-authorizing evidence.",
+                    "Topic scope, authority floors, influence budgets, and independent quorum.",
+                ],
+            ],
+        )),
+        ("p", (
+            "The model aligns most directly with OWASP LLM01 prompt injection, LLM04 data and model poisoning, LLM06 excessive "
+            "agency, LLM08 vector and embedding weaknesses, and MCP-style tool poisoning. The defense is therefore evaluated as "
+            "an authorization layer over memory influence rather than as a general jailbreak detector."
+        )),
+        ("h2", "4.6 Out-of-Scope Capabilities"),
         ("p", (
             "The prototype does not claim resistance to direct modification of defense code, malicious policy administrators, full "
             "memory database compromise, credential theft, compromised verified identity, arbitrary model-weight compromise, or all "
@@ -900,7 +1013,7 @@ def blocks(results: dict[str, Any], figures: dict[str, Path]) -> list[tuple[str,
             "its sources instead of becoming trusted by repetition."
         )),
         ("table", (
-            "Table 2. Capsule fields and their security role.",
+            "Table 5. Capsule fields and their security role.",
             ["Capsule field", "Security function"],
             [
                 ["source_type", "Classifies origin such as verified record, user declaration, web, tool output, OCR, summary, or experience."],
@@ -962,7 +1075,7 @@ def blocks(results: dict[str, Any], figures: dict[str, Path]) -> list[tuple[str,
             "and gap reports. The live LLM results are used as a realism check rather than as the only evidence for the claim."
         )),
         ("table", (
-            "Table 3. Implementation components used by the research prototype.",
+            "Table 6. Implementation components used by the research prototype.",
             ["Component", "Role"],
             [
                 ["capsule_guard/models.py", "Capsule schema, memory seed, plans, risks, and traces."],
@@ -978,7 +1091,7 @@ def blocks(results: dict[str, Any], figures: dict[str, Path]) -> list[tuple[str,
         )),
         ("h2", "6.1 Baselines"),
         ("table", (
-            "Table 4. Compared agents and what each one tests.",
+            "Table 7. Compared agents and what each one tests.",
             ["Agent", "Defense idea", "Expected weakness"],
             [
                 ["ambient_memory", "Retrieve memory and let it directly influence planning.", "No security boundary between recall and action."],
@@ -991,7 +1104,7 @@ def blocks(results: dict[str, Any], figures: dict[str, Path]) -> list[tuple[str,
         )),
         ("h2", "6.2 Attack Coverage"),
         ("table", (
-            "Table 5. Attack areas represented in the current simulator.",
+            "Table 8. Attack areas represented in the current simulator.",
             ["Attack area", "Current representation", "Remaining realism gap"],
             [
                 ["Adaptive attackers", "Closed-loop mutation after policy feedback.", "Not a fully autonomous external LLM red team."],
@@ -1037,7 +1150,7 @@ def blocks(results: dict[str, Any], figures: dict[str, Path]) -> list[tuple[str,
         ("h1", "8. Results"),
         ("figure", (figures["workflow"], "Figure 4. Held-out workflow-corpus results.")),
         ("table", (
-            "Table 6. Held-out workflow-corpus test split.",
+            "Table 9. Held-out workflow-corpus test split.",
             ["Agent", "ASR", "Risky action", "Benign accuracy", "FPR", "Sealing"],
             workflow_table(results),
         )),
@@ -1049,7 +1162,7 @@ def blocks(results: dict[str, Any], figures: dict[str, Path]) -> list[tuple[str,
         )),
         ("figure", (figures["stress"], "Figure 5. Stress-suite attack success rates.")),
         ("table", (
-            "Table 7. Stress-suite ASR comparison.",
+            "Table 10. Stress-suite ASR comparison.",
             ["Scenario", "Ambient ASR", "Provenance ASR", "Capsule ASR", "Capsule sealing"],
             stress_table(results),
         )),
@@ -1061,7 +1174,7 @@ def blocks(results: dict[str, Any], figures: dict[str, Path]) -> list[tuple[str,
         )),
         ("figure", (figures["ablation"], "Figure 6. Ablation results.")),
         ("table", (
-            "Table 8. Ablation results on the held-out workflow corpus.",
+            "Table 11. Ablation results on the held-out workflow corpus.",
             ["Variant", "ASR", "Benign", "FPR", "Sealing", "Interpretation"],
             ablation_table(results),
         )),
@@ -1073,7 +1186,7 @@ def blocks(results: dict[str, Any], figures: dict[str, Path]) -> list[tuple[str,
         )),
         ("h2", "8.1 Threshold Calibration Check"),
         ("table", (
-            "Table 9. Current-main threshold calibration sweep.",
+            "Table 12. Current-main threshold calibration sweep.",
             ["Medium floor", "Topic floor", "ASR", "Risky action", "Benign", "FPR", "Score", "Selected"],
             calibration_table(results),
         )),
@@ -1086,7 +1199,7 @@ def blocks(results: dict[str, Any], figures: dict[str, Path]) -> list[tuple[str,
         ("h2", "8.2 Live LLM Planner Check"),
         ("figure", (figures["live_llm"], "Figure 7. Live LLM planner check.")),
         ("table", (
-            "Table 10. Medium live LLM workflow-corpus run.",
+            "Table 13. Medium live LLM workflow-corpus run.",
             ["Condition", "Rows", "Planner tempted", "Final ASR", "Risky action", "Raw parse error", "Final parse error"],
             live_llm_table(results),
         )),
@@ -1098,12 +1211,12 @@ def blocks(results: dict[str, Any], figures: dict[str, Path]) -> list[tuple[str,
             "and risky action to 0.00%. Raw and final parse errors were both 0.00%, so this result is not explained by malformed model output."
         )),
         ("table", (
-            "Table 11. Defended medium live LLM result by model.",
+            "Table 14. Defended medium live LLM result by model.",
             ["Model", "Rows", "Planner tempted", "Final ASR", "Risky action", "Raw parse error"],
             live_llm_model_table(results),
         )),
         ("table", (
-            "Table 12. High-cost local LLM smoke profile.",
+            "Table 15. High-cost local LLM smoke profile.",
             ["Condition", "Rows", "Final ASR", "Risky action", "Parse/audit note"],
             high_cost_smoke_table(results),
         )),
@@ -1114,7 +1227,7 @@ def blocks(results: dict[str, Any], figures: dict[str, Path]) -> list[tuple[str,
         )),
         ("h2", "8.3 Gap-Closure Interpretation"),
         ("table", (
-            "Table 13. Why capsule authorization closes tested baseline failures.",
+            "Table 16. Why capsule authorization closes tested baseline failures.",
             ["Failure class", "Why simpler baselines fail", "Capsule control that blocks it"],
             [
                 ["Benign-looking web poison", "Keyword filters see ordinary recommendation language.", "Source authority floor plus denied high-risk actions."],

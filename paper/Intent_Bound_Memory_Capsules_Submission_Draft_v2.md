@@ -90,9 +90,56 @@ The project therefore does not copy an existing named defense. It extracts a com
 
 ### 4.2 Attacker Capabilities
 
-The attacker may influence memories through web content, OCR-extracted text, tool output, agent-generated summaries, experience logs, query-only interaction, delayed triggers, semantic paraphrases, retrieval collisions, or trusted-looking but unattested metadata. The attacker tries to cause a future query to retrieve and act on the poisoned memory.
+The adversary is a memory-poisoning attacker, not a code-execution attacker. The attacker can cause untrusted or weakly trusted content to enter the agent's memory lifecycle, wait for that content to be retrieved in a later task, and attempt to turn retrieved data into planning authority.
 
-### 4.3 Out-of-Scope Capabilities
+**Table 2. Formal attacker capabilities and limits.**
+
+| Capability | In scope | Explicit limit |
+| --- | --- | --- |
+| Injection channel | The attacker can inject text through web pages, tool outputs, OCR-extracted documents, alt text, user-visible documents, experience logs, summaries, or memory import paths. | The attacker cannot directly edit system prompts, policy code, the capsule authorization gate, or benchmark labels. |
+| Persistence | The attacker may create delayed-trigger or cross-session poison that is stored today and activated by a later user query. | The attacker cannot delete audit records or force the memory store to ignore capsule status transitions. |
+| Semantic adaptation | The attacker may paraphrase instructions, split payloads across memories, use benign-looking wording, or craft retrieval-collision text. | The attacker cannot forge cryptographic provenance, verified-writer identity, or independent corroboration without compromising those systems. |
+| Tool and OCR manipulation | The attacker may place malicious instructions inside tool-return text or OCR-visible content that the agent might summarize or store. | The attacker cannot directly compromise the tool runtime, OCR engine binary, or external service credentials. |
+| Goal | The attacker aims to alter a recommendation, planning path, memory-derived preference, or medium/high-risk tool action toward an attacker-preferred outcome. | The attacker is not assumed to seek denial-of-service, model-weight compromise, or arbitrary host code execution in this prototype. |
+
+### 4.3 Trust Boundaries and Assumptions
+
+The core trust boundary is between retrieved memory as relevance evidence and retrieved memory as authority. The memory database, vector retriever, OCR pipeline, browser/tool outputs, and agent summaries are treated as partially untrusted inputs. The capsule compiler and policy gate are inside the trusted computing base for this prototype.
+
+**Table 3. Threat-model assumptions.**
+
+| Assumption | Reason |
+| --- | --- |
+| Policy code and capsule gate execute as implemented. | The paper evaluates memory authorization, not host compromise or malicious maintainers. |
+| Source labels may be noisy, but cryptographic attestations and verified writers cannot be forged in-scope. | This lets the benchmark test provenance distrust while preserving a meaningful root of trust. |
+| Similarity retrieval can return malicious memories. | The defense must not rely on vector retrieval being safe; retrieval is treated as candidate selection only. |
+| The planner may be tempted by malicious context. | The evaluation separates planner influence from final action acceptance using poison influence rate and ASR. |
+| High-impact actions require explicit authorization evidence. | This models least-privilege operation for email, purchase, deletion, data sharing, and tool-chain changes. |
+
+### 4.4 Security Objectives and Success Criteria
+
+- Prevent unauthorized influence: poisoned memory should not be able to determine the selected recommendation, plan, or tool path.
+- Prevent unsafe execution: poisoned memory should not cause medium/high-risk actions such as email, purchase, delete, transfer, or data sharing.
+- Preserve benign utility: legitimate memories should still support normal personalization and task completion.
+- Keep poisoning auditable: suspicious records should be sealed, rejected, or traceable rather than silently discarded.
+- Expose late-blocking defenses: metrics should distinguish final output blocking from memory influence before the output gate.
+
+### 4.5 STRIDE and OWASP LLM Mapping
+
+**Table 4. Threat categories covered by the model.**
+
+| Category | Agent-memory threat | Capsule control |
+| --- | --- | --- |
+| Spoofing | Untrusted memory pretends to be user preference, verified experience, or trusted tool output. | Source authority, writer identity, verification count, and lineage checks. |
+| Tampering | Stored memory, summaries, or derived experiences alter future planning context. | Append-only provenance, capsule status, denied actions, and parent authority caps. |
+| Repudiation | The system cannot explain why a poisoned memory was used or blocked. | Policy traces, sealed status, and attack-breakdown reporting. |
+| Information disclosure | Poisoned memory steers the agent to email or reveal private data. | Risk-aware action authorization and evidence quorum for data-sharing actions. |
+| Denial of service | Overly broad blocking damages benign memory usefulness. | Benign accuracy and false-positive rate are measured alongside ASR. |
+| Elevation of privilege | A low-authority memory becomes action-authorizing evidence. | Topic scope, authority floors, influence budgets, and independent quorum. |
+
+The model aligns most directly with OWASP LLM01 prompt injection, LLM04 data and model poisoning, LLM06 excessive agency, LLM08 vector and embedding weaknesses, and MCP-style tool poisoning. The defense is therefore evaluated as an authorization layer over memory influence rather than as a general jailbreak detector.
+
+### 4.6 Out-of-Scope Capabilities
 
 The prototype does not claim resistance to direct modification of defense code, malicious policy administrators, full memory database compromise, credential theft, compromised verified identity, arbitrary model-weight compromise, or all possible adaptive LLM jailbreaks. These are important deployment risks, but they are outside the current benchmark.
 
@@ -100,7 +147,7 @@ The prototype does not claim resistance to direct modification of defense code, 
 
 A capsule is a memory record plus an influence contract. The contract does not merely describe provenance; it constrains what the memory may do. A web page can be useful context, but it should not authorize a purchase. A tool result can describe state, but it should not rewrite user preference. An agent summary can help recall, but it should inherit the authority of its sources instead of becoming trusted by repetition.
 
-**Table 2. Capsule fields and their security role.**
+**Table 5. Capsule fields and their security role.**
 
 | Capsule field | Security function |
 | --- | --- |
@@ -163,7 +210,7 @@ Algorithm 2: AuthorizePlan(intent, retrieved_capsules)
 
 The prototype, CapsuleGuard, is implemented in Python. It includes capsule compilation, policy gates, baseline agents, retrieval modes, provenance logging, scenario generation, corpus loading, safe tool traces, and experiment runners. The default high-volume experiments use a deterministic planner to isolate memory-authorization behavior. The repository also contains a live LLM planner harness with strict planner-schema output, repair/audit tracking, model-level summaries, and gap reports. The live LLM results are used as a realism check rather than as the only evidence for the claim.
 
-**Table 3. Implementation components used by the research prototype.**
+**Table 6. Implementation components used by the research prototype.**
 
 | Component | Role |
 | --- | --- |
@@ -179,7 +226,7 @@ The prototype, CapsuleGuard, is implemented in Python. It includes capsule compi
 
 ### 6.1 Baselines
 
-**Table 4. Compared agents and what each one tests.**
+**Table 7. Compared agents and what each one tests.**
 
 | Agent | Defense idea | Expected weakness |
 | --- | --- | --- |
@@ -192,7 +239,7 @@ The prototype, CapsuleGuard, is implemented in Python. It includes capsule compi
 
 ### 6.2 Attack Coverage
 
-**Table 5. Attack areas represented in the current simulator.**
+**Table 8. Attack areas represented in the current simulator.**
 
 | Attack area | Current representation | Remaining realism gap |
 | --- | --- | --- |
@@ -235,7 +282,7 @@ The evaluation reports both security and utility metrics because a trivial defen
 
 *Figure 4. Held-out workflow-corpus results.*
 
-**Table 6. Held-out workflow-corpus test split.**
+**Table 9. Held-out workflow-corpus test split.**
 
 | Agent | ASR | Risky action | Benign accuracy | FPR | Sealing |
 | --- | --- | --- | --- | --- | --- |
@@ -251,7 +298,7 @@ On the held-out workflow corpus, ambient memory and keyword filtering both reach
 
 *Figure 5. Stress-suite attack success rates.*
 
-**Table 7. Stress-suite ASR comparison.**
+**Table 10. Stress-suite ASR comparison.**
 
 | Scenario | Ambient ASR | Provenance ASR | Capsule ASR | Capsule sealing |
 | --- | --- | --- | --- | --- |
@@ -267,7 +314,7 @@ The stress suites show the same pattern: provenance helps but does not fully sol
 
 *Figure 6. Ablation results.*
 
-**Table 8. Ablation results on the held-out workflow corpus.**
+**Table 11. Ablation results on the held-out workflow corpus.**
 
 | Variant | ASR | Benign | FPR | Sealing | Interpretation |
 | --- | --- | --- | --- | --- | --- |
@@ -280,7 +327,7 @@ The ablation results show why the paper should not report ASR alone. Removing to
 
 ### 8.1 Threshold Calibration Check
 
-**Table 9. Current-main threshold calibration sweep.**
+**Table 12. Current-main threshold calibration sweep.**
 
 | Medium floor | Topic floor | ASR | Risky action | Benign | FPR | Score | Selected |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -297,7 +344,7 @@ A 16-point current-main sweep over medium-risk quorum and topic-scope thresholds
 
 *Figure 7. Live LLM planner check.*
 
-**Table 10. Medium live LLM workflow-corpus run.**
+**Table 13. Medium live LLM workflow-corpus run.**
 
 | Condition | Rows | Planner tempted | Final ASR | Risky action | Raw parse error | Final parse error |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -306,7 +353,7 @@ A 16-point current-main sweep over medium-risk quorum and topic-scope thresholds
 
 The live LLM planner experiment is not the highest-volume benchmark; it is a realism check that the authorization layer works when the plan is produced by actual local models rather than only by the deterministic planner. Across llama3, mistral, and phi3, the ambient prompt produced 22.22% final attack success. The capsule-filtered prompt still showed 2.78% planner temptation, which is useful evidence that the planner can be pulled toward the poison, but final authorization reduced accepted attack success and risky action to 0.00%. Raw and final parse errors were both 0.00%, so this result is not explained by malformed model output.
 
-**Table 11. Defended medium live LLM result by model.**
+**Table 14. Defended medium live LLM result by model.**
 
 | Model | Rows | Planner tempted | Final ASR | Risky action | Raw parse error |
 | --- | --- | --- | --- | --- | --- |
@@ -314,7 +361,7 @@ The live LLM planner experiment is not the highest-volume benchmark; it is a rea
 | mistral | 36 | 2.78% | 0.00% | 0.00% | 0.00% |
 | phi3 | 36 | 2.78% | 0.00% | 0.00% | 0.00% |
 
-**Table 12. High-cost local LLM smoke profile.**
+**Table 15. High-cost local LLM smoke profile.**
 
 | Condition | Rows | Final ASR | Risky action | Parse/audit note |
 | --- | --- | --- | --- | --- |
@@ -326,7 +373,7 @@ The high-cost local smoke profile is a machinery check for the larger conference
 
 ### 8.3 Gap-Closure Interpretation
 
-**Table 13. Why capsule authorization closes tested baseline failures.**
+**Table 16. Why capsule authorization closes tested baseline failures.**
 
 | Failure class | Why simpler baselines fail | Capsule control that blocks it |
 | --- | --- | --- |
