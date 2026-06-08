@@ -4,7 +4,7 @@ import csv
 from pathlib import Path
 
 
-BASELINE_AGENTS = ("ambient_memory", "keyword_filter", "provenance_only")
+BASELINE_AGENTS = ("ambient_memory", "keyword_filter", "output_moderation", "provenance_only")
 CAPSULE_AGENT = "intent_capsules"
 
 RULE_MAP = {
@@ -25,6 +25,10 @@ RULE_MAP = {
     "tool_consensus_poison": "tool-output restriction + source authority floor",
     "tool_output_poison": "tool-output denied actions + source authority floor",
     "web_poison": "web-source authority floor + evidence quorum",
+    "lifecycle_agent_summary_medium_risk_steering": "source authority floor + lineage inheritance guard before planning",
+    "lifecycle_delayed_medium_risk_steering": "trigger-bound topic scope + web-source authority floor before planning",
+    "lifecycle_experience_medium_risk_steering": "verified preference precedence + evidence quorum before planning",
+    "lifecycle_tool_output_medium_risk_steering": "tool-output source authority floor before planning",
 }
 
 
@@ -51,6 +55,7 @@ def build_gap_closure_rows(breakdown_rows: list[dict[str, object]]) -> list[dict
                 "failed_baselines": ",".join(failed),
                 "ambient_asr": agent_scores.get("ambient_memory", 0.0),
                 "keyword_filter_asr": agent_scores.get("keyword_filter", 0.0),
+                "output_moderation_asr": agent_scores.get("output_moderation", 0.0),
                 "provenance_only_asr": agent_scores.get("provenance_only", 0.0),
                 "capsuleguard_asr": capsule_asr,
                 "closed": capsule_asr == 0.0,

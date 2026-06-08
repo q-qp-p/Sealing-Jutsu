@@ -50,6 +50,7 @@ ATTACK_MODE_CHOICES = (
     "trusted_source_compromise",
     "advanced_attack_suite",
     "retrieval_collision",
+    "memory_lifecycle_gap",
     "utility",
     "multimodal",
     "attacker_generated",
@@ -72,6 +73,10 @@ ATTACK_MODE_DEFINITIONS = {
     "retrieval_collision": (
         "vector retrieval collision benchmark that crafts topically overlapping poison memories and checks whether "
         "retrieval similarity can become influence without policy authorization."
+    ),
+    "memory_lifecycle_gap": (
+        "Focused benchmark for the output-moderation blind spot: poisoned memories steer medium-risk "
+        "recommendations, so the final action is not high-risk even though planning was poisoned."
     ),
     "utility": "Benign personalization and normal-use tasks used to measure usefulness preservation.",
     "multimodal": "OCR-style image/document extracted-memory poisoning cases.",
