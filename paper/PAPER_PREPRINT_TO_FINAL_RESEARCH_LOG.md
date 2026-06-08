@@ -106,6 +106,103 @@ The answer became:
 
 > Output moderation can block the final action while still allowing poisoned memory to influence the planner. Intent capsules aim to stop unauthorized memory influence before planning authority is granted.
 
+## 5.1 Work Completed After the Preprint
+
+After the printed preprint was created, we continued improving both the research evidence and the paper package. The most important post-preprint work was:
+
+1. Formalized the threat model.
+   - Added attacker capabilities and explicit attacker limits.
+   - Defined protected assets.
+   - Defined the trusted computing base.
+   - Separated retrieved memory as relevance evidence from retrieved memory as authority.
+   - Added STRIDE mapping.
+   - Added OWASP LLM mapping.
+   - Made the paper safer by clearly stating what is out of scope.
+
+2. Added the `poison_influence_rate` metric.
+   - This was the biggest research improvement after the preprint.
+   - It measures whether poisoned memory reaches the planner and causes the planner to select the attacker target before final output blocking.
+   - This made it possible to prove that output moderation and semantic judges are not equivalent to capsule authorization.
+
+3. Re-ran benchmarks with poison influence reporting.
+   - Updated benchmark tables to include `infl`.
+   - Updated summary CSV files with `poison_influence_rate_mean`.
+   - Updated breakdown CSV files with poison influence counts.
+   - Added a dedicated poison-influence chart to result folders.
+
+4. Fixed the output-moderation comparison problem.
+   - Before this, output moderation could look as good as CapsuleGuard when ASR alone was measured.
+   - After adding influence rate, the paper can show:
+     - output moderation: 0.00% final ASR but high poison influence
+     - intent capsules: 0.00% final ASR and 0.00% poison influence
+   - This became one of the strongest paper arguments.
+
+5. Added converted AgentDojo/InjecAgent evidence.
+   - Converted external-style traces were evaluated with `trace_corpus`.
+   - AgentDojo and InjecAgent splits were summarized.
+   - The new evidence showed that output moderation can still allow 30.00%-90.62% poison influence.
+   - Intent capsules stayed at 0.00% poison influence across those converted corpora.
+
+6. Added a converted-corpus report.
+   - File: `results/converted_corpus_report.md`
+   - This report explains why output moderation is late blocking, while CapsuleGuard is pre-planning authorization.
+
+7. Added and reported the memory lifecycle gap benchmark.
+   - This benchmark shows cases where final output moderation does not fully close the problem.
+   - It also shows that some ablations can hide final ASR while still allowing poisoned planning influence.
+
+8. Added live LLM planner evidence to the paper.
+   - The paper now includes the medium live LLM workflow-corpus run.
+   - Models covered:
+     - llama3
+     - mistral
+     - phi3
+   - The live LLM result shows ambient prompt final ASR at 22.22% and capsule-filtered final ASR at 0.00%.
+
+9. Fixed the LLM parser issue before reporting results.
+   - Earlier live LLM tests had raw parse error concerns.
+   - Later runs reached 0.00% raw parse error and 100.00% first-pass valid planner rate in the reported medium run.
+   - This made the LLM result more defensible.
+
+10. Added threshold calibration evidence.
+    - A 16-point current-main sweep was run over medium-risk quorum and topic-scope thresholds.
+    - The simulator reported 0.00% ASR, 0.00% risky action, 100.00% benign accuracy, and 0.00% FPR across the sweep.
+    - The paper still honestly says this does not replace larger external calibration.
+
+11. Updated the README and paper narrative.
+    - README now explains influence rate.
+    - README now clarifies why output moderation is not equivalent to intent-bound capsules.
+    - The paper now uses the same narrative.
+
+12. Created the v3 research paper.
+    - File: `paper/Sealing_Jutsu_Research_Paper_v3.md`
+    - File: `paper/Sealing_Jutsu_Research_Paper_v3.docx`
+    - Builder: `paper/build_research_paper_v3.py`
+    - The v3 paper was written from the latest evidence rather than just lightly editing the preprint.
+
+13. Generated a PDF version of the v3 paper.
+    - File: `paper/Sealing_Jutsu_Research_Paper_v3.pdf`
+    - The normal DOCX-to-PDF renderer was blocked because LibreOffice/Word was not installed.
+    - The builder was updated to generate PDF directly using `reportlab`.
+    - The PDF was validated with `pypdf`.
+
+14. Added Git binary safeguards.
+    - File: `.gitattributes`
+    - Added binary rules for `.pdf`, `.docx`, and image files.
+    - This prevents line-ending conversion from corrupting generated paper artifacts.
+
+15. Preserved the paper-generation workflow.
+    - Instead of manually exporting one-off files only, the repository now contains scripts that regenerate the paper artifacts.
+    - This makes later revisions easier and more reproducible.
+
+Post-preprint commits that matter most:
+
+- `88ee558 feat(metrics): report poison influence rate`
+- `de3e246 docs(paper): add formal threat model`
+- `95c79c8 docs(paper): add updated research paper draft`
+- `4e2be27 docs(paper): add generated PDF draft`
+- `787347a docs(paper): record preprint to final draft process`
+
 ## 6. Formal Threat Model Added
 
 A full threat model was added to the paper materials.
