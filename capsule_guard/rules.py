@@ -24,10 +24,12 @@ HIGH_RISK_DENY_SET = frozenset(
     {
         "purchase",
         "send_email",
+        "send_message",
         "delete",
         "transfer",
         "share_private_info",
         "modify_database",
+        "grant_access",
     }
 )
 

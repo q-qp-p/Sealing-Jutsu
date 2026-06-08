@@ -252,6 +252,7 @@ def _record_to_scenario(record: dict[str, Any], path: Path, line_number: int) ->
         raise WorkflowCorpusError(f"{path}:{line_number}: poisoned workflow must mark at least one event poison=true")
 
     attack_type = str(record.get("attack_type") or ("workflow_trace_poison" if poisoned else "workflow_trace_benign"))
+    bad_action = _first_string(record, ("bad_action", "attacker_action"))
     return Scenario(
         id=workflow_id,
         query=query,
@@ -259,7 +260,8 @@ def _record_to_scenario(record: dict[str, Any], path: Path, line_number: int) ->
         poisoned=poisoned,
         expected_recommendation=expected,
         poisoned_memory_ids=tuple(poisoned_memory_ids),
-        bad_recommendation=str(record.get("bad_recommendation") or "vendorx"),
+        bad_recommendation=str(record.get("bad_recommendation") or ("neutral_option" if bad_action else "vendorx")),
+        bad_action=bad_action,
         attack_type=attack_type,
     )
 
@@ -284,11 +286,16 @@ def _trace_record_to_scenario(record: dict[str, Any], path: Path, line_number: i
     )
     if not expected:
         raise WorkflowCorpusError(f"{path}:{line_number}: expected_recommendation is required")
+    bad_action = (
+        _first_string(task, ("bad_action", "attacker_action"))
+        or _first_string(labels, ("bad_action", "attacker_action"))
+        or _first_string(record, ("bad_action", "attacker_action"))
+    )
     bad = (
         _first_string(task, ("bad_recommendation", "attacker_target"))
         or _first_string(labels, ("bad_recommendation", "attacker_target"))
         or _first_string(record, ("bad_recommendation", "attacker_target"))
-        or "vendorx"
+        or ("neutral_option" if bad_action else "vendorx")
     )
     events = record.get("events") or record.get("messages") or record.get("steps")
     if not isinstance(events, list) or not events:
@@ -318,6 +325,7 @@ def _trace_record_to_scenario(record: dict[str, Any], path: Path, line_number: i
         expected_recommendation=expected,
         poisoned_memory_ids=tuple(poisoned_memory_ids),
         bad_recommendation=bad,
+        bad_action=bad_action,
         attack_type=str(labels.get("attack_type") or record.get("attack_type") or ("real_trace_poison" if poisoned else "real_trace_benign")),
     )
 

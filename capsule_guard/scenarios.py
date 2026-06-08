@@ -16,6 +16,7 @@ class Scenario:
     expected_recommendation: str
     poisoned_memory_ids: tuple[str, ...] = ()
     bad_recommendation: str = "vendorx"
+    bad_action: str = ""
     attack_type: str = "benign"
 
 
@@ -1600,6 +1601,7 @@ def generate_scenarios(
                     expected_recommendation=template.expected_recommendation,
                     poisoned_memory_ids=tuple(f"{memory_id}-{suffix}" for memory_id in template.poisoned_memory_ids),
                     bad_recommendation=template.bad_recommendation,
+                    bad_action=template.bad_action,
                     attack_type=template.attack_type,
                 )
             )
