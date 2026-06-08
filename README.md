@@ -10,7 +10,7 @@
 
 <p align="center">
   <a href="#quick-start"><img alt="Python" src="https://img.shields.io/badge/python-3.10%2B-111827"></a>
-  <a href="#testing"><img alt="Tests" src="https://img.shields.io/badge/tests-147%20passing-1f883d"></a>
+  <a href="#testing"><img alt="Tests" src="https://img.shields.io/badge/tests-163%20passing-1f883d"></a>
   <a href="#current-evidence"><img alt="Held-out ASR" src="https://img.shields.io/badge/held--out%20ASR-0.00%25-0f766e"></a>
   <a href="#honest-limits"><img alt="Scope" src="https://img.shields.io/badge/scope-research%20prototype-7c2d12"></a>
 </p>
@@ -88,6 +88,16 @@ The short version: baselines still get poisoned, but the capsule path blocks the
 | Medium live LLM benchmark | Capsule-filtered prompt: 0.00% final attack success across llama3, mistral, and phi3 |
 | Gap-fixed rerun | Same 0.00% final attack success reproduced; planner temptation stayed at 2.78% |
 | Trace realism | Added `trace_corpus` importer so real or lab-collected agent traces can be evaluated without rewriting Python scenarios |
+| Converted external corpora | AgentDojo and InjecAgent traces now report poison influence separately from final action blocking |
+
+`Influence Rate` counts poisoned cases where poisoned memory reached the planner and the planner selected the attacker target before any final output gate. This matters because output moderation can block the final action while still letting poisoned memory steer the plan.
+
+Converted-corpus readout, committed in `results/converted_corpus_report.md`:
+
+| Defense style | Final ASR | Poison influence | What it means |
+|---|---:|---:|---|
+| Output moderation / semantic judge | 0.00% | 30.00-90.62% | Final action is blocked, but poisoned memory still steers planning |
+| Intent capsules | 0.00% | 0.00% | Poisoned memory is denied planning authority before action gating |
 
 Latest committed workflow-corpus test split:
 

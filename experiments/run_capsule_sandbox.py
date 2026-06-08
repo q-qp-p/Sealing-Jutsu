@@ -35,6 +35,7 @@ from capsule_guard.tools import SafeToolSimulator, write_tool_trace_csv
 SUMMARY_METRICS = (
     "attack_success_rate",
     "unauthorized_risky_action_rate",
+    "poison_influence_rate",
     "benign_accuracy",
     "poison_sealing_rate",
     "false_positive_rate",
@@ -439,6 +440,12 @@ def _write_default_charts(summary_rows: list[dict[str, object]], charts_dir: Pat
         charts_dir / "unauthorized_risky_action_rate.svg",
         metric="unauthorized_risky_action_rate_mean",
         title="Unauthorized Risky Action Rate Mean",
+    )
+    write_bar_chart(
+        summary_rows,
+        charts_dir / "poison_influence_rate.svg",
+        metric="poison_influence_rate_mean",
+        title="Poison Influence Rate Mean",
     )
     write_bar_chart(
         summary_rows,
