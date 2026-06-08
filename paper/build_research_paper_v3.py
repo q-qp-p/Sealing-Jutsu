@@ -11,6 +11,22 @@ from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 from docx.shared import Inches, Pt, RGBColor
+from reportlab.lib import colors
+from reportlab.lib.enums import TA_CENTER, TA_LEFT
+from reportlab.lib.pagesizes import letter
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+from reportlab.lib.units import inch
+from reportlab.platypus import (
+    Image as PdfImage,
+    ListFlowable,
+    ListItem,
+    PageBreak,
+    Paragraph,
+    SimpleDocTemplate,
+    Spacer,
+    Table,
+    TableStyle,
+)
 
 
 ROOT = Path(__file__).resolve().parent
@@ -20,6 +36,7 @@ FIGURES = ROOT / "figures_v2"
 
 OUT_MD = ROOT / "Sealing_Jutsu_Research_Paper_v3.md"
 OUT_DOCX = ROOT / "Sealing_Jutsu_Research_Paper_v3.docx"
+OUT_PDF = ROOT / "Sealing_Jutsu_Research_Paper_v3.pdf"
 
 TITLE = "Intent-Bound Memory Authorization Against Persistent Agent Poisoning"
 AUTHORS = [
@@ -674,13 +691,223 @@ def build_docx(blocks: list[tuple[str, object]]) -> None:
     doc.save(OUT_DOCX)
 
 
+def pdf_styles() -> dict[str, ParagraphStyle]:
+    base = getSampleStyleSheet()
+    return {
+        "title": ParagraphStyle(
+            "PaperTitle",
+            parent=base["Title"],
+            fontName="Helvetica-Bold",
+            fontSize=17,
+            leading=20,
+            alignment=TA_CENTER,
+            textColor=colors.HexColor(f"#{BLUE}"),
+            spaceAfter=10,
+        ),
+        "author": ParagraphStyle(
+            "AuthorBlock",
+            parent=base["Normal"],
+            fontName="Helvetica",
+            fontSize=9,
+            leading=11,
+            alignment=TA_CENTER,
+            textColor=colors.HexColor(f"#{DARK}"),
+            spaceAfter=5,
+        ),
+        "meta": ParagraphStyle(
+            "Meta",
+            parent=base["Normal"],
+            fontName="Helvetica",
+            fontSize=8.5,
+            leading=10,
+            alignment=TA_CENTER,
+            textColor=colors.HexColor(f"#{MUTED}"),
+            spaceAfter=12,
+        ),
+        "h1": ParagraphStyle(
+            "Heading1Custom",
+            parent=base["Heading1"],
+            fontName="Helvetica-Bold",
+            fontSize=13,
+            leading=16,
+            textColor=colors.HexColor(f"#{BLUE}"),
+            spaceBefore=12,
+            spaceAfter=5,
+        ),
+        "h2": ParagraphStyle(
+            "Heading2Custom",
+            parent=base["Heading2"],
+            fontName="Helvetica-Bold",
+            fontSize=11,
+            leading=14,
+            textColor=colors.HexColor(f"#{BLUE}"),
+            spaceBefore=8,
+            spaceAfter=4,
+        ),
+        "body": ParagraphStyle(
+            "BodyCustom",
+            parent=base["BodyText"],
+            fontName="Helvetica",
+            fontSize=9.6,
+            leading=12,
+            alignment=TA_LEFT,
+            spaceAfter=6,
+        ),
+        "small": ParagraphStyle(
+            "SmallCustom",
+            parent=base["BodyText"],
+            fontName="Helvetica",
+            fontSize=7.2,
+            leading=8.5,
+            spaceAfter=2,
+        ),
+        "caption": ParagraphStyle(
+            "CaptionCustom",
+            parent=base["BodyText"],
+            fontName="Helvetica-Oblique",
+            fontSize=8,
+            leading=9.5,
+            alignment=TA_CENTER,
+            textColor=colors.HexColor(f"#{MUTED}"),
+            spaceAfter=6,
+        ),
+        "table_caption": ParagraphStyle(
+            "TableCaptionCustom",
+            parent=base["BodyText"],
+            fontName="Helvetica-Bold",
+            fontSize=8.3,
+            leading=10,
+            textColor=colors.HexColor(f"#{BLUE}"),
+            spaceBefore=5,
+            spaceAfter=3,
+        ),
+    }
+
+
+def pdf_para(text: str, style: ParagraphStyle) -> Paragraph:
+    safe = (
+        str(text)
+        .replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+    )
+    return Paragraph(safe, style)
+
+
+def pdf_markup(text: str, style: ParagraphStyle) -> Paragraph:
+    return Paragraph(str(text), style)
+
+
+def pdf_table(caption: str, headers: list[str], data: list[list[str]], styles: dict[str, ParagraphStyle], width: float) -> list[object]:
+    flow: list[object] = [pdf_para(caption, styles["table_caption"])]
+    rows_pdf = [[pdf_para(header, styles["small"]) for header in headers]]
+    rows_pdf.extend([[pdf_para(cell, styles["small"]) for cell in row] for row in data])
+    col_width = width / max(len(headers), 1)
+    table = Table(rows_pdf, colWidths=[col_width] * len(headers), repeatRows=1, hAlign="LEFT")
+    table.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor(f"#{LIGHT_BLUE}")),
+                ("TEXTCOLOR", (0, 0), (-1, 0), colors.HexColor(f"#{DARK}")),
+                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                ("GRID", (0, 0), (-1, -1), 0.35, colors.HexColor(f"#{GRID}")),
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                ("LEFTPADDING", (0, 0), (-1, -1), 3),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 3),
+                ("TOPPADDING", (0, 0), (-1, -1), 3),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+                ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor(f"#{LIGHT_GRAY}")]),
+            ]
+        )
+    )
+    flow += [table, Spacer(1, 6)]
+    return flow
+
+
+def pdf_bullets(items: Iterable[str], styles: dict[str, ParagraphStyle]) -> ListFlowable:
+    return ListFlowable(
+        [ListItem(pdf_para(item, styles["body"]), leftIndent=12) for item in items],
+        bulletType="bullet",
+        leftIndent=18,
+        bulletFontName="Helvetica",
+        bulletFontSize=7,
+    )
+
+
+def pdf_figure(path: Path, caption: str, styles: dict[str, ParagraphStyle], width: float) -> list[object]:
+    if not path.exists():
+        return []
+    img = PdfImage(str(path))
+    scale = min(width / img.drawWidth, 3.75 * inch / img.drawHeight)
+    img.drawWidth *= scale
+    img.drawHeight *= scale
+    img.hAlign = "CENTER"
+    return [Spacer(1, 5), img, pdf_para(caption, styles["caption"])]
+
+
+def add_page_number(canvas, doc) -> None:
+    canvas.saveState()
+    canvas.setFont("Helvetica", 8)
+    canvas.setFillColor(colors.HexColor(f"#{MUTED}"))
+    canvas.drawRightString(doc.pagesize[0] - doc.rightMargin, 0.38 * inch, f"Page {doc.page}")
+    canvas.restoreState()
+
+
+def build_pdf(blocks: list[tuple[str, object]]) -> None:
+    doc = SimpleDocTemplate(
+        str(OUT_PDF),
+        pagesize=letter,
+        leftMargin=0.55 * inch,
+        rightMargin=0.55 * inch,
+        topMargin=0.55 * inch,
+        bottomMargin=0.6 * inch,
+        title=TITLE,
+        author=", ".join(name for name, _, _ in AUTHORS),
+    )
+    styles = pdf_styles()
+    width = doc.width
+    story: list[object] = [pdf_para(TITLE, styles["title"])]
+    for name, affiliation, email in AUTHORS:
+        story.append(pdf_markup(f"{name}<br/>{affiliation}<br/>{email}", styles["author"]))
+    story.append(pdf_para("Draft generated from Sealing-Jutsu repository artifacts, June 2026", styles["meta"]))
+
+    for kind, payload in blocks:
+        if kind == "abstract":
+            story.append(pdf_para("Abstract", styles["h1"]))
+            story.append(pdf_para(str(payload), styles["body"]))
+        elif kind == "keywords":
+            story.append(pdf_markup(f"<b>Index Terms:</b> {payload}", styles["body"]))
+        elif kind == "h1":
+            story.append(pdf_para(str(payload), styles["h1"]))
+        elif kind == "h2":
+            story.append(pdf_para(str(payload), styles["h2"]))
+        elif kind == "p":
+            story.append(pdf_para(str(payload), styles["body"]))
+        elif kind == "bullets":
+            story.append(pdf_bullets(payload, styles))
+            story.append(Spacer(1, 4))
+        elif kind == "table":
+            caption, headers, data = payload
+            story.extend(pdf_table(caption, headers, data, styles, width))
+        elif kind == "figure":
+            path, caption = payload
+            story.extend(pdf_figure(path, caption, styles, width))
+        elif kind == "references":
+            for idx, ref in enumerate(payload, 1):
+                story.append(pdf_para(f"[{idx}] {ref}", styles["small"]))
+
+    doc.build(story, onFirstPage=add_page_number, onLaterPages=add_page_number)
+
+
 def main() -> None:
     ctx = build_context()
     blocks = paper_blocks(ctx)
     write_markdown(blocks)
     build_docx(blocks)
+    build_pdf(blocks)
     print(f"wrote {OUT_MD}")
     print(f"wrote {OUT_DOCX}")
+    print(f"wrote {OUT_PDF}")
 
 
 if __name__ == "__main__":
