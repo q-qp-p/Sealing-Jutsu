@@ -36,3 +36,7 @@ results/*validation_report.json
 
 # Local research notes that should not be pushed.
 docs/REAL_WORLD_READINESS.md
+
+# Local paper drafts and submission materials should stay off GitHub.
+paper/
+paper.zip
